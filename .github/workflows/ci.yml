@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: uv sync --python ${{ matrix.python }}
+      - run: uv run python scripts/sync_spec.py --check
+      - run: uv run ruff check
+      - run: uv run ruff format --check
+      - run: uv run mypy
+      - run: uv run pytest --cov --cov-report=term-missing
+
+  scenarios:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: uv sync
+      - run: uv run awp-sim scenarios --out traces
+      - run: uv run python scripts/check_traces.py traces/*.jsonl
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scenario-traces
+          path: traces/
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build
+      - run: uvx twine check dist/*
+      - name: install the wheel in a clean environment
+        run: |
+          uv venv /tmp/wheel
+          uv pip install --python /tmp/wheel dist/*.whl
+          /tmp/wheel/bin/awp-sim scenarios limit-exceeded
