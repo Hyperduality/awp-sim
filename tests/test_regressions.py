@@ -39,7 +39,7 @@ def test_requests_are_refused_while_the_session_closes():
     net.advance(200)
     first = a.client.close()
     net.settle()
-    assert refused(lambda: a.submit("stop", {})) == ErrorCode.INVALID_REQUEST
+    assert refused(lambda: a.submit("stop", {})) == ErrorCode.SESSION_EXPIRED  # AWP-SES-011
     second = a.client.close()
     assert net.run_until(lambda: a.client.session_state == "closed", 2000)
     assert a.call(first) == {}

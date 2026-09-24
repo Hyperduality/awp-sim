@@ -363,7 +363,7 @@ class World:
             if method in _NEEDS_SESSION and c.session is None:
                 raise AwpError(ErrorCode.INVALID_REQUEST, "no session on this connection")
             if method in _REFUSED_WHILE_CLOSING and c.session and c.session.closing_reason:
-                raise AwpError(ErrorCode.INVALID_REQUEST, "the session is closing")
+                raise AwpError(ErrorCode.SESSION_EXPIRED, "the session is closing")  # AWP-SES-011
             params_schema = schema.schema_for(method, "params")
             if params_schema is not None:
                 schema.check(params_schema, params)
