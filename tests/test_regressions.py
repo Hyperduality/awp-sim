@@ -8,7 +8,7 @@ import json
 import pytest
 
 from awp.aio import AsyncClient
-from awp.client import ClientConnection, ProtocolViolation
+from awp.client import ClientConnection, FrameReceived, ProtocolViolation
 from awp.errors import AwpError, ErrorCode
 from awp_sim.config import WorldConfig
 from awp_sim.server import Server, _Outbox
@@ -132,12 +132,24 @@ def test_text_from_an_unknown_connection_is_ignored():
     assert world.receive_text("gone", "{not json", 0) == []
 
 
-def test_idle_connections_without_a_session_are_closed():
+def test_idle_connections_without_a_session_are_closed_after_15_s():
     net = make_net(heartbeat_interval_ms=100)
     a = net.agent()
     a.connect()
-    net.advance(350)
+    net.advance(14_000)
+    assert a.conn is not None  # AWP-SES-012: at least 15 s, whatever the heartbeat interval
+    net.advance(1_100)
     assert a.conn is None
+
+
+def test_channels_in_undeclared_modalities_are_not_granted():
+    net = make_net()
+    a = net.agent(modalities=["proprio/json"])
+    ready = a.open(mode="streaming", embodiment="arm_01", subscribe=["proprio", "arm_state"])
+    assert [g["channel"] for g in ready["granted"]["channels"]] == ["proprio"]  # AWP-AGM-001
+    assert refused(lambda: a.call(a.client.subscribe(["arm_state"]))) == ErrorCode.FORBIDDEN
+    net.advance(200)
+    assert {f.channel for f in a.of(FrameReceived)} == {"proprio"}
 
 
 def test_pre_session_pings_do_not_feed_the_clock():

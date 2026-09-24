@@ -81,6 +81,8 @@ class _Conn:
     last_rx_ns: int
     last_ping_ns: int
     initialized: bool = False
+    consumes: frozenset[str] = frozenset()
+    max_obs_rate_hz: float | None = None
     session: Session | None = None
     next_id: int = 1
     preamble: list[tuple[str, Message]] = field(default_factory=list)
@@ -378,6 +380,8 @@ class World:
         if "0.1" not in p["protocol_versions"]:
             raise AwpError(ErrorCode.VERSION_UNSUPPORTED, "this world speaks 0.1")
         c.initialized = True
+        c.consumes = frozenset(p["consumes_modalities"])
+        c.max_obs_rate_hz = p.get("max_obs_rate_hz")
         self._reply(c, rid, self.manifest)
 
     def _rpc_world_manifest(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
@@ -404,7 +408,7 @@ class World:
             raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"unknown embodiment {embodiment}")
         if embodiment is not None and self._holder is not None:
             raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"{embodiment} is bound elsewhere")
-        readable = self._readable(embodiment)
+        readable = self._readable(embodiment, c.consumes)
         requested = p.get("subscribe", [])
         for sub in requested:
             if sub["channel"] not in self._channels:
@@ -429,7 +433,7 @@ class World:
         )
         for sub in requested:
             if sub["channel"] in readable:
-                self._grant(s, sub["channel"], sub.get("rate_hz"), now)
+                self._grant(s, sub["channel"], sub.get("rate_hz"), now, c.max_obs_rate_hz)
         self.sessions[s.id] = s
         self._tokens[s.token] = s
         if embodiment is not None:
@@ -485,6 +489,9 @@ class World:
             if self._audit is not None:
                 self._audit.record(s.id, self._clock(s, now), direction, m)
         c.preamble.clear()
+        readable = self._readable(s.embodiment, c.consumes)
+        for name in [n for n in s.grants if n not in readable]:
+            del s.grants[name]  # the new connection does not consume it (AWP-AGM-001)
         for g in s.grants.values():
             g.resync = g.loss_class == "reliable"  # AWP-TRN-008
         ready: dict[str, Any] = {
@@ -518,7 +525,7 @@ class World:
     def _rpc_obs_subscribe(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
         s = c.session
         assert s is not None
-        readable = self._readable(s.embodiment)
+        readable = self._readable(s.embodiment, c.consumes)
         for sub in p["channels"]:
             if sub["channel"] not in self._channels:
                 raise AwpError(ErrorCode.CHANNEL_UNKNOWN, sub["channel"])
@@ -528,9 +535,11 @@ class World:
         for sub in p["channels"]:
             existing = s.grants.get(sub["channel"])
             if existing is None:
-                new.append(self._grant(s, sub["channel"], sub.get("rate_hz"), now))
+                new.append(
+                    self._grant(s, sub["channel"], sub.get("rate_hz"), now, c.max_obs_rate_hz)
+                )
             elif existing.rate_hz is not None:
-                existing.rate_hz = self._rate(sub["channel"], sub.get("rate_hz"))
+                existing.rate_hz = self._rate(sub["channel"], sub.get("rate_hz"), c.max_obs_rate_hz)
         self._reply(c, rid, {"granted": [g.to_wire() for g in s.grants.values()]})
         for g in new:
             self._emit_frame(s, g, now)
@@ -947,22 +956,34 @@ class World:
 
     # ================================================================ frames and telemetry
 
-    def _readable(self, embodiment: str | None) -> set[str]:
-        if embodiment is None:
-            return set(self._channels)  # observers read every channel
-        return set(self.manifest["embodiments"][0]["channels"])
+    def _readable(self, embodiment: str | None, consumes: frozenset[str]) -> set[str]:
+        """Channels the session may read: its embodiment's (every channel for an observer), and
+        only in modalities the agent declared (AWP-AGM-001)."""
+        names = (
+            set(self._channels)
+            if embodiment is None
+            else set(self.manifest["embodiments"][0]["channels"])
+        )
+        return {n for n in names if self._channels[n]["modality"] in consumes}
 
-    def _rate(self, channel: str, requested: float | None) -> float | None:
+    def _rate(
+        self, channel: str, requested: float | None, cap: float | None = None
+    ) -> float | None:
+        """The granted rate: never above the declared one, the request, or the agent's
+        max_obs_rate_hz (AWP-NEG-003, AWP-AGM-002)."""
         declared: float | None = self._channels[channel]["rate_hz"]
         if declared is None:
             return None
-        return declared if requested is None else min(float(requested), declared)
+        bounds = [declared, *(float(v) for v in (requested, cap) if v is not None)]
+        return min(bounds)
 
-    def _grant(self, s: Session, channel: str, rate: float | None, now: int) -> ChannelGrant:
+    def _grant(
+        self, s: Session, channel: str, rate: float | None, now: int, cap: float | None = None
+    ) -> ChannelGrant:
         g = ChannelGrant(
             channel,
             s.next_channel_id,
-            self._rate(channel, rate),
+            self._rate(channel, rate, cap),
             self._channels[channel]["loss_class"],
             next_due_ns=now,
         )
@@ -1046,7 +1067,7 @@ class World:
     def _heartbeat(self, c: _Conn, now: int) -> None:
         interval = self.config.heartbeat_interval_ms * MS
         if c.session is None:
-            if now - c.last_rx_ns > 3 * interval:  # idle connection without a session
+            if now - c.last_rx_ns > max(15 * S, 3 * interval):  # AWP-SES-012
                 self._out.append(Close(c.id, "idle"))
                 self._conns.pop(c.id, None)
             return

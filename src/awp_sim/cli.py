@@ -56,6 +56,7 @@ def _parser() -> argparse.ArgumentParser:
         ("heartbeat-ms", 5000),
         ("reconnect-window-ms", 30000),
         ("tick-ms", 20),
+        ("max-duration-ms", 10000),
     ):
         s.add_argument(f"--{name}", type=int, default=default)
     s.add_argument("--log-level", default="INFO")
@@ -131,6 +132,7 @@ def _serve(args: argparse.Namespace) -> int:
         heartbeat_interval_ms=args.heartbeat_ms,
         reconnect_window_ms=args.reconnect_window_ms,
         tick_ms=args.tick_ms,
+        max_duration_ms=args.max_duration_ms,
     )
     tls = None
     if args.tls_cert:

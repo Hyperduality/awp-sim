@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "awp-python"
-version = "0.1.0.dev0"
+version = "0.1.0a1"
 description = "Agent World Protocol client protocol layer and reference world for Python."
 readme = "README.md"
 license = "Apache-2.0"
