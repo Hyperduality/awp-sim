@@ -5,11 +5,13 @@ Python implementation of the [Agent World Protocol](https://www.agentworldprotoc
 - **`awp`** — the client protocol layer. `ClientConnection` is the agent side of AWP as a sans-IO state machine; `awp.aio.AsyncClient` drives it over a WebSocket.
 - **`awp_sim`** — the reference world. A sans-IO world engine with a simulated arm, a WebSocket server, an audit log, and a scenario suite that records wire traces.
 
-It targets specification revision **`0.1-draft.7`**, pinned as the `spec/` submodule. This is an alpha: the API will change with the draft.
+It targets specification revision **`0.1-draft.8`**, pinned as the `spec/` submodule. This is an alpha: the API will change with the draft.
 
 ## Status
 
-The world and client target **Core World** and **Core Agent** for both time models, and the world the **sim** profile in lockstep, *self-assessed against 0.1-draft.7*: [awp-conformance](https://github.com/Hyperduality/awp-conformance) reports no failure against any configuration and leaves a few requirements untested. Every recorded trace also passes the spec's own checker, which verifies schemas, the action lifecycle table, idempotency, replay, and frame sequencing.
+![AWP: Core World, AWP-conformant against 0.1-draft.8](https://img.shields.io/badge/AWP-Core_World%2C_conformant_0.1--draft.8-555)
+
+The world is **Core World: AWP-conformant against 0.1-draft.8** in both time models: [awp-conformance](https://github.com/Hyperduality/awp-conformance) reports no failure and nothing untested, and [`conformance/`](conformance/README.md) holds the reports and the evidence for their manual rows. The **sim** profile in lockstep and the client as **Core Agent** in both time models are *self-assessed against 0.1-draft.8*: the suite reports no failure and leaves a few requirements untested. Every recorded trace also passes the spec's own checker, which verifies schemas, the action lifecycle table, idempotency, replay, and frame sequencing.
 
 | Implemented | Not implemented |
 |---|---|
@@ -17,7 +19,7 @@ The world and client target **Core World** and **Core Agent** for both time mode
 | Inline and `ws` stream bindings; binary frame codec (all spec vectors) | Other stream bindings (`webrtc`, `webtransport`, `shm`, `grpc`) |
 | Full action lifecycle; preemption (`replace`, `queue`, `reject`, `blend`); idempotency | Standing approvals, grant expiry |
 | Watchdog and safe state, heartbeats, resumption with replay and acknowledgement | Multi-bind and shared control (one embodiment) |
-| Spatial, velocity, and rate envelopes (`command_check`) | Robotics profile (a simulated arm proves nothing physical) |
+| Spatial, velocity, and rate envelopes (`command_check`), monitored during execution | Robotics profile (a simulated arm proves nothing physical) |
 | Audit log with redaction and hash chain; e-stop; `world.reset` | |
 | Beyond Core (`--features`): task, approval, transfer, seeding, snapshots, replay bundles, a servo command channel | |
 
@@ -86,7 +88,7 @@ The connection tracks the action lifecycle against the spec's transition table, 
 src/awp/            client protocol layer (sans-IO), asyncio adapter, frame codec, schemas
 src/awp/_spec/      schemas and lifecycle table bundled from spec/ (scripts/sync_spec.py)
 src/awp_sim/        world engine, arm, server, audit log, loopback, scenarios, CLI
-spec/               agent-world-protocol, pinned at spec-v0.1-draft.7
+spec/               agent-world-protocol, pinned at spec-v0.1-draft.8
 scripts/            spec sync and trace checking
 ```
 

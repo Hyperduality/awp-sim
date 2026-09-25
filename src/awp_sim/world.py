@@ -127,6 +127,7 @@ class World:
         self._approvals: dict[str, tuple[str, str, int]] = {}  # id → (session, action, expires)
         self._transfers: dict[str, tuple[str, int]] = {}  # token → (session, expires, monotonic)
         self.estop = False
+        self._violating = False  # the arm is outside its envelope (AWP-ENV-003)
         self.sessions: dict[str, Session] = {}
         self._tokens: dict[str, Session] = {}
         self._closed_tokens: OrderedDict[str, None] = OrderedDict()
@@ -298,6 +299,7 @@ class World:
             last = self._last_step_ns if self._last_step_ns is not None else now
             self._step_arm(now - last)
             self._last_step_ns = now
+            self._monitor_envelope(now)
         for s in list(self.sessions.values()):
             if not self.lockstep:
                 self._update_actions(s, now)
@@ -341,6 +343,12 @@ class World:
                     elif a.state.pre_execution:
                         self._finish(s, a, ActionState.CANCELLED, now, reason="e_stop")
         return self._flush()
+
+    def disturb(self, offset_m: tuple[float, float, float]) -> None:
+        """An external disturbance displaces the arm. The world detects a resulting envelope
+        violation on its next step (AWP-ENV-003)."""
+        p = self.arm.position
+        self.arm.position = (p[0] + offset_m[0], p[1] + offset_m[1], p[2] + offset_m[2])
 
     def release_estop(self, now: int) -> list[Output]:
         self._now = now
@@ -1232,6 +1240,23 @@ class World:
             return bool(a.status.get("tick") != self.tick)  # once per advance (AWP-LIF-003)
         return now - a.last_progress_ns >= self.config.progress_interval_ms * MS
 
+    def _monitor_envelope(self, now: int) -> None:
+        """AWP-ENV-003: leaving the envelope during execution fails the action (reason
+        `envelope`, after its safe abort) and emits `envelope_violation`."""
+        lo, hi = self.config.aabb_m
+        p = self.arm.position
+        inside = all(lo[i] - 1e-9 <= p[i] <= hi[i] + 1e-9 for i in range(3))
+        violating = not inside or self.arm.speed > self.config.max_velocity_mps + 1e-9
+        if violating and not self._violating:
+            self.arm.stop()
+            for s in list(self.sessions.values()):
+                self._event(s, "envelope_violation", now, {"embodiment": EMBODIMENT})
+                for a in s.running.values():
+                    if a.state is ActionState.EXECUTING and a.failing_with is None:
+                        a.failing_with = "envelope"
+                        a.cancel_started_ns = now
+        self._violating = violating
+
     def _check_deadlines(self, s: Session, now: int) -> None:
         clock = self._clock(s, now)
         for a in list(s.actions.values()):
@@ -1299,6 +1324,7 @@ class World:
                 if a.state is ActionState.ACCEPTED:
                     self._execute(s, a, now)
         self.arm.step(self.config.tick_ms / 1000)
+        self._monitor_envelope(now)
         for s in list(self.sessions.values()):
             self._update_actions(s, now)
         for s in list(self.sessions.values()):
