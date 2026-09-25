@@ -35,8 +35,10 @@ def test_a_stalled_receiver_holds_one_frame_per_latest_wins_channel():
         if seq % 100 == 0:
             box.put(Send(1, frame(2, seq // 100)))  # arm_state: reliable
     pending = [asyncio.run(box.get()) for _ in range(len(box._items))]
-    latest = [s.msg["params"]["seq"] for s in pending if s.msg["params"]["channel_id"] == 1]
-    reliable = [s.msg["params"]["seq"] for s in pending if s.msg["params"]["channel_id"] == 2]
+    sent = [item.msg["params"] for item in pending if isinstance(item, Send)]
+    latest = [p["seq"] for p in sent if p["channel_id"] == 1]
+    reliable = [p["seq"] for p in sent if p["channel_id"] == 2]
+    assert len(sent) == len(pending)
     assert latest == [1000]  # every older frame was replaced, not queued
     assert reliable == list(range(1, 11))  # nothing reliable dropped, in order
 
