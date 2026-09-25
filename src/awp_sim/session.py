@@ -7,6 +7,8 @@ from collections.abc import Hashable
 from dataclasses import dataclass, field
 from typing import Any
 
+from jsonschema import Draft202012Validator
+
 from awp.lifecycle import ActionState
 
 from .arm import Vec3
@@ -93,6 +95,23 @@ def stats(values: list[int]) -> dict[str, int]:
     }
 
 
+@dataclass(frozen=True, slots=True)
+class Standing:
+    """A scoped standing approval, held by the session that requested it (AWP-APR-004)."""
+
+    approval_id: str
+    type: str
+    predicate: Draft202012Validator | None
+    expires_ns: int  # on the session clock
+
+    def admits(self, type: str, params: dict[str, Any], clock_ns: int) -> bool:
+        return (
+            type == self.type
+            and clock_ns <= self.expires_ns
+            and (self.predicate is None or self.predicate.is_valid(params))
+        )
+
+
 @dataclass(slots=True)
 class Session:
     id: str
@@ -127,6 +146,7 @@ class Session:
     last_telemetry_ns: int = 0
     telemetry: Telemetry = field(default_factory=Telemetry)
     next_channel_id: int = 1
+    standing: list[Standing] = field(default_factory=list)
 
     def next_seq(self) -> int:
         self.seq += 1

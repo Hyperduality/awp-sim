@@ -43,6 +43,49 @@ def test_a_stalled_receiver_holds_one_frame_per_latest_wins_channel():
     assert reliable == list(range(1, 11))  # nothing reliable dropped, in order
 
 
+# ------------------------------------------------------------ AWP-DAT-001, AWP-DAT-009 (agent side)
+
+
+@pytest.mark.parametrize("mode", ["lockstep", "streaming"])
+def test_the_receiver_counts_seq_gaps_as_loss_but_not_the_gap_before_a_resync(mode):
+    net = make_net(mode=mode)
+    a = net.agent(heartbeat_ms=None if mode == "lockstep" else 500)
+    a.open(mode=mode, embodiment="arm_01", subscribe=["proprio", "arm_state"])
+    ready = a.client.ready
+    assert ready is not None
+    before = a.client.delivery()
+    ids = {g["channel"]: g["channel_id"] for g in ready["granted"]["channels"]}
+    last = {
+        cid: max(f.frame.seq for f in a.of(FrameReceived) if f.frame.channel_id == cid)
+        for cid in ids.values()
+    }
+
+    def deliver(cid: int, seq: int, *, resync: bool = False) -> None:
+        params = {
+            "channel_id": cid,
+            "seq": seq,
+            "ts_mono_ns": 0,
+            "flags": 0x09 if resync else 0x01,
+            "payload_b64": "e30=",
+            **({"tick": a.client.tick} if mode == "lockstep" else {"ts_send_ns": 0}),
+        }
+        events = a.client.receive({"jsonrpc": "2.0", "method": "obs.frame", "params": params})
+        assert [type(e) for e in events] == [FrameReceived]
+
+    proprio, arm_state = ids["proprio"], ids["arm_state"]
+    for n in (1, 2, 5):  # seqs 3 and 4 are lost
+        deliver(proprio, last[proprio] + n)
+    deliver(arm_state, last[arm_state] + 1)
+    deliver(arm_state, last[arm_state] + 6, resync=True)  # a discontinuity the sender knew of
+    after = a.client.delivery()
+    counts = {n: (after[n][0] - before[n][0], after[n][1] - before[n][1]) for n in ids}
+    assert counts == {"proprio": (3, 2), "arm_state": (2, 0)}
+    if mode == "streaming":  # and so the receiver report states (AWP-OBS-007)
+        report = a.client.report()["params"]["channels"]
+        assert report[str(proprio)]["gaps"] == 2
+        assert report[str(arm_state)]["gaps"] == 0
+
+
 # ------------------------------------------------------------ AWP-ENV-003
 
 

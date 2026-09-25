@@ -11,6 +11,8 @@ from awp.errors import AwpError, ErrorCode
 
 from .helpers import events, make_net, pose, statuses
 
+MS = 1_000_000
+
 FAR = pose(0.4, 0.4, 0.6)
 NEAR = pose(-0.3, 0.2, 0.3)
 TASK = {"content": [{"type": "text", "text": "Park the arm."}]}
@@ -113,6 +115,79 @@ def test_a_pending_approval_can_be_cancelled():
     action = a.submit("park", {})
     a.call(a.client.cancel(action))
     assert statuses(a, action)[-1] == ("cancelled", "cancelled_by_agent")
+
+
+def standing(req, *, lasting_ms=1000, **scope):
+    """A standing approval answering `req`, until `lasting_ms` after it was requested."""
+    expires = req["expires_at_ns"] - 60_000 * MS + lasting_ms * MS
+    return {"scope": {"type": req["type"], **scope}, "expires_at_ns": expires}
+
+
+def test_a_standing_approval_admits_matching_submissions_until_it_expires():
+    net, approver = approval_net()
+    a = open_arm(net)
+    first = a.submit("park", {})
+    [req] = requests(approver)
+    approver.call(
+        approver.client.respond_approval(req["approval_id"], "approve", standing=standing(req))
+    )
+    net.run_until(lambda: a.client.actions[first].terminal, 5000)
+    second = a.client.submit("park", {})
+    result = a.call(a.client.last_id)
+    assert result["state"] == "accepted"  # no pending_approval (AWP-APR-004)
+    assert result["approval_id"] == req["approval_id"]
+    assert len(requests(approver)) == 1
+    net.run_until(lambda: a.client.actions[second].terminal, 5000)
+    net.advance(1000)
+    third = a.submit("park", {})
+    assert a.client.actions[third].state == "pending_approval"  # the grant expired
+    assert len(requests(approver)) == 2
+
+
+def test_a_standing_approval_is_scoped_to_its_predicate():
+    net, approver = approval_net()
+    a = open_arm(net)
+    first = a.submit("park", {})
+    [req] = requests(approver)
+    never = standing(req, lasting_ms=60_000, predicate={"not": {}})
+    approver.call(approver.client.respond_approval(req["approval_id"], "approve", standing=never))
+    net.run_until(lambda: a.client.actions[first].terminal, 5000)
+    assert a.client.actions[a.submit("park", {})].state == "pending_approval"
+
+
+def test_a_standing_approval_ends_with_its_session():
+    net, approver = approval_net()
+    a = open_arm(net)
+    first = a.submit("park", {})
+    [req] = requests(approver)
+    grant = standing(req, lasting_ms=60_000)
+    approver.call(approver.client.respond_approval(req["approval_id"], "approve", standing=grant))
+    net.run_until(lambda: a.client.actions[first].terminal, 5000)
+    a.call(a.client.close())
+    b = open_arm(net)
+    assert b.client.actions[b.submit("park", {})].state == "pending_approval"
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"decision": "deny"},
+        {"scope": {"type": "move_to_pose"}},
+        {"scope": {"type": "park", "predicate": {"type": 5}}},
+    ],
+)
+def test_an_invalid_standing_approval_changes_nothing(change):
+    net, approver = approval_net()
+    a = open_arm(net)
+    action = a.submit("park", {})
+    [req] = requests(approver)
+    grant = {**standing(req), **{k: v for k, v in change.items() if k == "scope"}}
+    decision = change.get("decision", "approve")
+    call = approver.client.respond_approval(req["approval_id"], decision, standing=grant)
+    assert refused(lambda: approver.call(call)) == ErrorCode.PARAMS_INVALID
+    assert a.client.actions[action].state == "pending_approval"
+    approver.call(approver.client.respond_approval(req["approval_id"], "approve"))
+    assert a.client.actions[action].state != "pending_approval"
 
 
 # ---------------------------------------------------------------- blend

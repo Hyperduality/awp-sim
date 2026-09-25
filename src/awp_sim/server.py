@@ -280,7 +280,7 @@ class Server:
         try:
             async for raw in ws:
                 if isinstance(raw, str):
-                    await ws.close(code=1008, reason="AWP_MALFORMED: text on a stream connection")
+                    await ws.close(code=1002, reason="AWP_MALFORMED")  # AWP-TRN-013
                     break
                 self._dispatch(self.world.receive_stream(conn, raw, time.monotonic_ns()))
         except ConnectionClosed:
@@ -295,7 +295,7 @@ class Server:
             while True:
                 send = await outbox.get()
                 if isinstance(send, Close):  # everything queued before it has been sent
-                    await ws.close(code=1008, reason=send.reason[:120])
+                    await ws.close(code=send.code, reason=send.reason[:120])
                     return
                 if isinstance(send, SendFrame):
                     await ws.send(self.world.frame_bytes(send, time.monotonic_ns()))

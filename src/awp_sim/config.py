@@ -79,6 +79,7 @@ class WorldConfig:
         safety: dict[str, Any] = {"envelopes": [self.envelope]}
         if self.has("approval"):
             safety["approval_timeout_ms"] = self.approval_timeout_ms
+            safety["standing_approvals"] = True
         capabilities: dict[str, Any] = {}
         if self.has("task"):
             capabilities["task"] = True

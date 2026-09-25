@@ -358,6 +358,37 @@ def test_estop_terminates_everything_and_suspends_admission():
     a.submit("stop", {}, action_id="a-retry")
 
 
+def test_lockstep_resumption_resyncs_every_per_tick_channel_at_the_tick():
+    net = make_net(mode="lockstep")
+    a = net.agent(heartbeat_ms=None)
+    a.open(mode="lockstep", embodiment="arm_01", subscribe=["proprio", "arm_state"])
+    a.call(a.client.advance(3))
+    a.drop()
+    a.connect()
+    a.call(a.client.initialize())
+    before = len(a.of(FrameReceived))
+    ready = a.call(a.client.resume())
+    after = [f.frame for f in a.of(FrameReceived)[before:]]
+    assert {(f.channel_id, f.tick, f.resync, f.keyframe) for f in after} == {
+        (g["channel_id"], ready["tick"], True, True) for g in ready["granted"]["channels"]
+    }  # AWP-TIM-009, AWP-TRN-008
+    assert a.client.holds_tick(ready["tick"])
+
+
+def test_reset_sends_the_fresh_frames_before_its_result():
+    net = make_net(mode="lockstep")
+    a = net.agent(heartbeat_ms=None)
+    a.open(mode="lockstep", embodiment="arm_01", subscribe=["proprio"], admin=["reset"])
+    a.call(a.client.advance(5))
+    rid = a.client.request("world.reset", {})
+    a.call(rid)
+    order = [e for e in a.events if isinstance(e, FrameReceived) or getattr(e, "id", None) == rid]
+    frame, result = order[-2:]
+    assert isinstance(frame, FrameReceived)  # the fresh frame precedes the result (AWP-PRM-006)
+    assert frame.frame.tick == 0
+    assert not isinstance(result, FrameReceived)
+
+
 def test_reset_requires_grant_and_cancels_actions():
     net = make_net()
     a = net.agent()
@@ -431,6 +462,9 @@ def test_protocol_errors():
     huge = huge.replace('"origin_ns":1', '"origin_ns":' + str(2**60))
     out = net.world.receive_text(a.conn, huge, net.now)
     assert isinstance(out[-1], Close)  # AWP-CTL-009 closes the session and the connection
+    assert (out[-1].code, out[-1].reason) == (1002, "AWP_INTEGER_RANGE")
+    closed = [o.msg["params"] for o in out if isinstance(o, Send) and "method" in o.msg]
+    assert (closed[-1]["state"], closed[-1]["reason"]) == ("closed", "protocol_error")
     assert net.world.sessions == {}
 
 
