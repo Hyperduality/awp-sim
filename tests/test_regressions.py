@@ -228,3 +228,16 @@ async def test_recorded_traces_redact_session_tokens(tmp_path):
     tokens = [r["session_token"] for r in results if "session_token" in r]
     assert tokens
     assert tokens[0].startswith("[redacted")
+
+
+def test_a_latest_wins_replacement_keeps_the_resync_flag():
+    from awp.frames import Frame
+    from awp_sim.world import SendFrame
+
+    box = _Outbox()
+    box.put(SendFrame("c", Frame(1, 5, 0, b"a", keyframe=True, resync=True), "s", latest_wins=True))
+    box.put(SendFrame("c", Frame(1, 6, 1, b"b", keyframe=True), "s", latest_wins=True))
+    item = asyncio.run(box.get())
+    assert isinstance(item, SendFrame)
+    assert item.frame.seq == 6
+    assert item.frame.resync  # AWP-TRN-012, AWP-DAT-009

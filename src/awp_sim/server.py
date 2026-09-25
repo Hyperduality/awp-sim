@@ -12,6 +12,7 @@ import ssl
 import time
 from collections import deque
 from collections.abc import Hashable, Sequence
+from dataclasses import replace
 from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -46,6 +47,16 @@ def _channel(item: Item) -> int | None:
     return None
 
 
+def _keep_resync(old: Item, new: Item) -> Item:
+    """The newer frame, carrying the resync flag of the one it replaces (AWP-DAT-009)."""
+    if isinstance(old, SendFrame) and isinstance(new, SendFrame) and old.frame.resync:
+        return replace(new, frame=replace(new.frame, resync=True, keyframe=True))
+    if isinstance(old, Send) and isinstance(new, Send) and old.msg["params"].get("flags", 0) & 0x08:
+        params = {**new.msg["params"], "flags": new.msg["params"].get("flags", 0) | 0x09}
+        return replace(new, msg={**new.msg, "params": params})
+    return new
+
+
 def _bearer(headers: Headers) -> str | None:
     """The credential from `Authorization` or an `awp.bearer.<token>` subprotocol (AWP-SEC-005)."""
     auth = headers.get("Authorization") or ""
@@ -76,7 +87,7 @@ class _Outbox:
         if channel is not None:
             cell = self._slots.get(channel)
             if cell is not None:
-                cell[0] = item
+                cell[0] = _keep_resync(cell[0], item)  # a resync is never replaced away
                 return True
             cell = self._slots[channel] = [item]
         else:

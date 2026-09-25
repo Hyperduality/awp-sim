@@ -127,7 +127,7 @@ class WorldConfig:
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "phase": {"enum": ["idle", "moving", "stopping"]},
+                            "phase": {"enum": ["idle", "moving", "stopping", "servo"]},
                             "target_m": {"type": ["array", "null"]},
                             "action_id": {"type": ["string", "null"]},
                         },
