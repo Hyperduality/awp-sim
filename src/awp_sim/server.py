@@ -121,6 +121,7 @@ class Server:
         record_dir: Path | str | None = None,
         step_ms: float = 2.0,
         stream_binding: bool = False,
+        approver_token: str | None = None,
     ) -> None:
         if not _is_loopback(host) and not allow_insecure:
             if token is None:
@@ -135,6 +136,7 @@ class Server:
         self.step_s = step_ms / 1000
         self.recorder = TraceRecorder(record_dir) if record_dir else None
         self.stream_binding = stream_binding
+        self.approver_token = approver_token
         self._ids = itertools.count(1)
         self._sockets: dict[Hashable, tuple[ServerConnection, _Outbox]] = {}
         self._server: WsServer | None = None
@@ -199,6 +201,8 @@ class Server:
             if _bearer(request.headers) is None:
                 return connection.respond(HTTPStatus.UNAUTHORIZED, "missing session token\n")
             return None
+        if self.approver_token is not None and _bearer(request.headers) == self.approver_token:
+            return None  # an approver (AWP-APR-005)
         if self.token is None or self._credential_ok(request.headers):
             return None
         return connection.respond(HTTPStatus.UNAUTHORIZED, "missing or invalid bearer token\n")
@@ -227,7 +231,12 @@ class Server:
         outbox = _Outbox()
         self._sockets[conn] = (ws, outbox)
         writer = asyncio.create_task(self._write(conn, ws, outbox))
-        self._dispatch(self.world.connect(conn, time.monotonic_ns()))
+        approver = (
+            self.approver_token is not None
+            and ws.request is not None
+            and _bearer(ws.request.headers) == self.approver_token
+        )
+        self._dispatch(self.world.connect(conn, time.monotonic_ns(), approver=approver))
         try:
             async for raw in ws:
                 if self.recorder is not None:

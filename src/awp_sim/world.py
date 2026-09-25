@@ -6,23 +6,26 @@ perform — messages to send and connections to close. Nothing here reads a cloc
 
 from __future__ import annotations
 
+import contextlib
+import copy
 import json
 import logging
+import random
 import secrets
 from collections import OrderedDict
 from collections.abc import Callable, Hashable
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from awp import jsonrpc, schema
 from awp.errors import AwpError, ErrorCode
-from awp.frames import Frame, decode, encode, to_inline
+from awp.frames import Frame, decode, encode, from_inline, to_inline
 from awp.jsonrpc import Message
 from awp.lifecycle import ActionState, same_submission
 
 from .arm import Arm, Phase
-from .config import EMBODIMENT, FRAME_TREE, HOME, WorldConfig
+from .config import EMBODIMENT, FRAME_TREE, HOME, PARK, SERVO_CHANNEL, WorldConfig
 from .session import Action, ChannelGrant, Session, Telemetry
 
 MS = 1_000_000
@@ -91,6 +94,7 @@ class _Conn:
     last_rx_ns: int
     last_ping_ns: int
     initialized: bool = False
+    approver: bool = False  # authorized by the deployment to decide approvals (AWP-APR-005)
     consumes: frozenset[str] = frozenset()
     max_obs_rate_hz: float | None = None
     session: Session | None = None
@@ -115,8 +119,13 @@ class World:
         self._audit = audit
         self._wall_clock = wall_clock
 
-        self.arm = Arm(position=HOME, accel_mps2=self.config.accel_mps2)
-        self.tick = 0
+        self.arm = Arm(position=HOME, accel_mps2=self.config.accel_mps2, bounds=self.config.aabb_m)
+        self.tick = 0  # the world's tick: reset and restore move it
+        self.advances = 0  # every advance ever made: the lockstep session clock (AWP-TIM-013)
+        self.rng = random.Random(0)  # simulated sensor noise, seeded (AWP-REP-001)
+        self._snapshots: dict[str, dict[str, Any]] = {}
+        self._approvals: dict[str, tuple[str, str, int]] = {}  # id → (session, action, expires)
+        self._transfers: dict[str, tuple[str, int]] = {}  # token → (session, expires, monotonic)
         self.estop = False
         self.sessions: dict[str, Session] = {}
         self._tokens: dict[str, Session] = {}
@@ -146,7 +155,24 @@ class World:
             "action.status": self._rpc_action_status,
             "world.tick": self._rpc_world_tick,
             "world.reset": self._rpc_world_reset,
+            **self._feature_handlers,
         }
+
+    @property
+    def _feature_handlers(self) -> dict[str, Callable[[_Conn, Any, dict[str, Any], int], None]]:
+        """Methods of advertised features; without them they are unknown (AWP-VER-007)."""
+        has = self.config.has
+        out: dict[str, Callable[[_Conn, Any, dict[str, Any], int], None]] = {}
+        if has("task"):
+            out["task.update"] = self._rpc_task_update
+        if has("sim"):
+            out["world.snapshot"] = self._rpc_world_snapshot
+            out["world.restore"] = self._rpc_world_restore
+        if has("approval"):
+            out["safety.approval.respond"] = self._rpc_approval_respond
+        if has("transfer"):
+            out["session.transfer"] = self._rpc_session_transfer
+        return out
 
     @property
     def lockstep(self) -> bool:
@@ -154,10 +180,10 @@ class World:
 
     # ================================================================ entry points
 
-    def connect(self, conn: Hashable, now: int) -> list[Output]:
+    def connect(self, conn: Hashable, now: int, *, approver: bool = False) -> list[Output]:
         self._now = now
         self._started_ns = self._started_ns if self._started_ns is not None else now
-        self._conns[conn] = _Conn(conn, last_rx_ns=now, last_ping_ns=now)
+        self._conns[conn] = _Conn(conn, last_rx_ns=now, last_ping_ns=now, approver=approver)
         return self._flush()
 
     def receive_text(self, conn: Hashable, text: str | bytes, now: int) -> list[Output]:
@@ -191,6 +217,10 @@ class World:
             self._on_request(c, msg, now)
         elif jsonrpc.is_notification(msg) and msg["method"] == "obs.report" and s is not None:
             pass  # accepted (AWP-OBS-007); the reference world does not adapt rates
+        elif jsonrpc.is_notification(msg) and msg["method"] == "cmd.frame" and s is not None:
+            with contextlib.suppress(AwpError):
+                schema.check("frame-inline", msg.get("params"))
+                self._on_command_frame(s, from_inline(msg["params"]), now)
         return self._flush()
 
     def disconnect(self, conn: Hashable, now: int) -> list[Output]:
@@ -223,9 +253,21 @@ class World:
         """Agent→world frames. Without command channels every frame is discarded (AWP-CMD-003)."""
         self._now = now
         try:
-            decode(data)
+            frame = decode(data)
         except AwpError as err:
             self._out.append(Close(conn, err.message))
+            return self._flush()
+        s = self.sessions.get(self._streams.get(conn, ""))
+        if s is not None:
+            if self._audit is not None:
+                self._audit.record(
+                    s.id,
+                    self._clock(s, now),
+                    "agent",
+                    jsonrpc.notification("cmd.frame", to_inline(frame)),
+                )
+            s.last_agent_ns = now
+            self._on_command_frame(s, frame, now)
         return self._flush()
 
     def stream_lost(self, conn: Hashable, now: int) -> list[Output]:
@@ -263,6 +305,9 @@ class World:
                 self._check_watchdog(s, now)
             self._check_retention(s, now)
             self._check_stream(s, now)
+        if not self.lockstep:
+            self._check_approvals(now)
+        for s in list(self.sessions.values()):
             if s.id in self.sessions and s.conn is not None and not self.lockstep:
                 self._stream_frames(s, now)
                 self._send_telemetry(s, now)
@@ -323,10 +368,15 @@ class World:
         return out
 
     def _clock(self, s: Session, now: int) -> int:
-        """The session clock (AWP-CLK-001). In lockstep it moves only with ticks (AWP-TIM-004)."""
+        """The session clock (AWP-CLK-001). In lockstep it counts advances, so that reset and
+        restore, which move the tick, never move it backward (AWP-TIM-013)."""
         if self.lockstep:
-            return self.tick * self.config.tick_ms * MS
+            return self.advances * self.config.tick_ms * MS
         return now - s.origin_ns
+
+    def _sim_ns(self) -> int | None:
+        """Simulated time, carried on frames by sim-profile worlds (AWP-CLK-003)."""
+        return self.tick * self.config.tick_ms * MS if self.config.has("sim") else None
 
     def _send(self, c: _Conn, msg: Message, *, latest_wins: bool = False) -> None:
         s = c.session
@@ -469,18 +519,24 @@ class World:
             raise AwpError(ErrorCode.SESSION_EXISTS)
         if p["mode"] != self.config.mode:
             raise AwpError(ErrorCode.TIME_MODEL_UNSUPPORTED, f"this world runs {self.config.mode}")
-        if "embodiments" in p or p.get("takeover"):
-            raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "multi-bind and transfer not offered")
+        if "embodiments" in p:
+            raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "multi-bind is not offered")
+        if p.get("takeover") and not self.config.has("transfer"):
+            raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "transfer is not offered")
         embodiment = p.get("embodiment")
         if embodiment is not None and embodiment != EMBODIMENT:
             raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"unknown embodiment {embodiment}")
-        if embodiment is not None and self._holder is not None:
+        if embodiment is not None and self._holder is not None and not p.get("takeover"):
             raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"{embodiment} is bound elsewhere")
         readable = self._readable(embodiment, c.consumes)
         requested = p.get("subscribe", [])
         for sub in requested:
             if sub["channel"] not in self._channels:
                 raise AwpError(ErrorCode.CHANNEL_UNKNOWN, sub["channel"])
+        if "task" in p and self.config.has("task"):
+            self._check_task(p["task"])
+        if p.get("takeover"):
+            self._take_over(p, now)
 
         offered = self.manifest["embodiments"][0]["action_types"] if embodiment else []
         wanted = p.get("action_types", offered)
@@ -502,13 +558,34 @@ class World:
         for sub in requested:
             if sub["channel"] in readable:
                 self._grant(s, sub["channel"], sub.get("rate_hz"), now, c.max_obs_rate_hz)
+        if "servo" in s.action_types:  # the streaming type implies its channel (AWP-CMD-002)
+            cmd = self.manifest["command_channels"][0]
+            s.grants[SERVO_CHANNEL] = ChannelGrant(
+                SERVO_CHANNEL, s.next_channel_id, cmd["rate_hz"], cmd["loss_class"], command=True
+            )
+            s.next_channel_id += 1
+        if self.config.has("task"):
+            s.task = p.get("task")
+        if "seed" in p and self.config.has("sim"):
+            self.rng.seed(
+                p["seed"]
+            )  # seeds the noise; the world state is as it stands (AWP-REP-001)
         self.sessions[s.id] = s
         self._tokens[s.token] = s
         if embodiment is not None:
             self._holder = s
         c.session = s
         if self._audit is not None:
-            self._audit.open(s.id, {"manifest": self.manifest, "session_id": s.id})
+            header: dict[str, Any] = {"manifest": self.manifest, "session_id": s.id}
+            if self.config.has("sim"):  # what a replay bundle starts from (AWP-REP-003)
+                token = "snap_" + secrets.token_urlsafe(18)
+                self._snapshots[token] = self.world_state()
+                header.update(
+                    snapshot_token=token,
+                    initial_state=encode_state(self.world_state()),
+                    config=encode_config(self.config),
+                )
+            self._audit.open(s.id, header)
             for direction, m in c.preamble:
                 self._audit.record(s.id, 0, direction, m)
         c.preamble.clear()
@@ -630,9 +707,19 @@ class World:
         initial = p.get("initial_state", "home")
         if initial not in self.manifest["initial_states"]:
             raise AwpError(ErrorCode.PARAMS_INVALID, f"unknown initial state {initial}")
-        for other in list(self.sessions.values()):  # AWP-PRM-006
-            detail = {"initiator": s.id, "kind": "reset", "initial_state": initial}
-            self._event(other, "world_resetting", now, detail)
+        if "seed" in p and not self.config.has("sim"):
+            raise AwpError(ErrorCode.PARAMS_INVALID, "seed needs capabilities.seed")
+        self._reset_effects(s, now, {"kind": "reset", "initial_state": initial})
+        self.arm.reset(HOME)
+        self.tick = 0
+        if "seed" in p:
+            self.rng.seed(p["seed"])
+        self._after_reset(c, rid, now)
+
+    def _reset_effects(self, s: Session, now: int, detail: dict[str, Any]) -> None:
+        """AWP-PRM-006 (1)-(2): warn every session, then end its actions with world_reset."""
+        for other in list(self.sessions.values()):
+            self._event(other, "world_resetting", now, {"initiator": s.id, **detail})
             for a in list(other.actions.values()):
                 if a.state is ActionState.EXECUTING:
                     self._transition(other, a, ActionState.CANCELLING, now, reason="world_reset")
@@ -642,12 +729,65 @@ class World:
                     )
                 elif a.state.pre_execution:
                     self._finish(other, a, ActionState.CANCELLED, now, reason="world_reset")
-        self.arm.reset(HOME)
+
+    def _after_reset(self, c: _Conn, rid: Any, now: int) -> None:
+        """AWP-PRM-006 (4): the result, then in lockstep a fresh frame carrying the new tick."""
         self._reply(c, rid, {"tick": self.tick} if self.lockstep else {})
         if self.lockstep:
             for other in self.sessions.values():
                 for g in other.grants.values():
                     self._emit_frame(other, g, now)
+
+    # ================================================================ snapshots (sim)
+
+    def world_state(self) -> dict[str, Any]:
+        """Everything restore brings back: the arm, the tick, and the noise generator."""
+        return {"arm": copy.deepcopy(self.arm), "tick": self.tick, "rng": self.rng.getstate()}
+
+    def load_state(self, state: dict[str, Any]) -> None:
+        self.arm = copy.deepcopy(state["arm"])
+        self.tick = state["tick"]
+        self.rng.setstate(state["rng"])
+
+    def _rpc_world_snapshot(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
+        s = c.session
+        assert s is not None
+        if "snapshot" not in s.admin:
+            raise AwpError(ErrorCode.FORBIDDEN, "world.snapshot requires the snapshot admin grant")
+        token = "snap_" + secrets.token_urlsafe(18)
+        self._snapshots[token] = (
+            self.world_state()
+        )  # valid for the life of the process (AWP-REP-002)
+        self._reply(c, rid, {"snapshot_token": token})
+
+    def _rpc_world_restore(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
+        s = c.session
+        assert s is not None
+        if "restore" not in s.admin:
+            raise AwpError(ErrorCode.FORBIDDEN, "world.restore requires the restore admin grant")
+        state = self._snapshots.get(p["snapshot_token"])
+        if state is None:
+            raise AwpError(ErrorCode.PARAMS_INVALID, "unknown snapshot_token")
+        self._reset_effects(s, now, {"kind": "restore"})
+        self.load_state(state)
+        self._after_reset(c, rid, now)
+
+    # ================================================================ task
+
+    def _check_task(self, task: dict[str, Any]) -> None:
+        """AWP-TSK-002: text blocks; this world declares no modality for any other kind."""
+        kinds = {b["type"] for b in task["content"]}
+        if kinds - {"text"}:
+            raise AwpError(
+                ErrorCode.PARAMS_INVALID, f"unsupported task blocks {sorted(kinds - {'text'})}"
+            )
+
+    def _rpc_task_update(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
+        s = c.session
+        assert s is not None
+        self._check_task(p["task"])
+        s.task = p["task"]  # whole, no diffing; running actions are unaffected (AWP-TSK-003)
+        self._reply(c, rid, {})
 
     # ================================================================ actions
 
@@ -672,6 +812,8 @@ class World:
             pose = p["params"]["pose"]
             a.target = (pose["p_m"][0], pose["p_m"][1], pose["p_m"][2])
             a.v_max = p["params"].get("max_velocity_mps", self.config.max_velocity_mps)
+        elif decl["type"] == "park":
+            a.target, a.v_max = PARK, self.config.max_velocity_mps
         bound = [v for v in (p.get("deadline_ms"), decl.get("max_duration_ms")) if v is not None]
         if bound and not self.lockstep:
             a.deadline_ns = received + min(bound) * MS  # AWP-ACT-004, AWP-ACT-008
@@ -679,10 +821,16 @@ class World:
         busy = self._busy(s, a.group)
         s.actions[a.action_id] = a
         s.last_admitted_ns = received
-        a.replaces = preempt == "replace"
+        a.replaces = preempt in ("replace", "blend")
+        a.blends = preempt == "blend"
         if a.replaces:
             self._supersede_pending(s, a.group, now)
-        state = ActionState.QUEUED if preempt == "queue" and busy else ActionState.ACCEPTED
+        if decl.get("requires_approval"):
+            state = ActionState.PENDING_APPROVAL  # admitted now, decided later (AWP-APR-001)
+        elif preempt == "queue" and busy:
+            state = ActionState.QUEUED
+        else:
+            state = ActionState.ACCEPTED
         a.state = state
         result = self._result_status(s, a, now)
         admission = self._clock(s, now) - received
@@ -701,7 +849,9 @@ class World:
             },
         )
         self._activate(s, now)
-        if state is ActionState.QUEUED:
+        if state is ActionState.PENDING_APPROVAL:
+            self._request_approval(s, a, now)
+        elif state is ActionState.QUEUED:
             s.queue(a.group).append(a)
         elif self.lockstep:
             s.staged.append(a)  # AWP-TIM-010
@@ -786,16 +936,22 @@ class World:
         return group in s.running or bool(s.queue(group)) or any(a.group == group for a in s.staged)
 
     def _supersede_pending(self, s: Session, group: str, now: int) -> None:
-        for a in [*s.queue(group), *[a for a in s.staged if a.group == group]]:
+        pending = [
+            a
+            for a in s.actions.values()
+            if a.state is ActionState.PENDING_APPROVAL and a.group == group
+        ]
+        for a in [*s.queue(group), *[a for a in s.staged if a.group == group], *pending]:
             self._finish(s, a, ActionState.CANCELLED, now, reason="superseded")
 
-    def _preempt_running(self, s: Session, group: str, now: int) -> None:
-        """A replacing action takes over its group when it begins executing (AWP-PRE-003)."""
+    def _preempt_running(self, s: Session, group: str, now: int, *, blended: bool = False) -> None:
+        """A replacing action takes over its group when it begins executing (AWP-PRE-003); a
+        blending one merges into the motion under way, so the arm does not stop (AWP-PRE-004)."""
         running = s.running.get(group)
         if running is None:
             return
         if running.state is ActionState.EXECUTING and running.failing_with is None:
-            self._finish(s, running, ActionState.PREEMPTED, now)
+            self._finish(s, running, ActionState.PREEMPTED, now, blended=blended or None)
         else:  # an abort already under way ends as it would have (AWP-LIF-008)
             state = ActionState.FAILED if running.failing_with else ActionState.CANCELLED
             reason = running.failing_with or running.cancel_reason
@@ -803,12 +959,16 @@ class World:
 
     def _execute(self, s: Session, a: Action, now: int) -> None:
         if a.replaces:
-            self._preempt_running(s, a.group, now)
+            self._preempt_running(s, a.group, now, blended=a.blends)
         s.running[a.group] = a
         a.last_progress_ns = now
+        a.last_frame_ns = now
         exiting_safe_state = s.safe_state
-        if a.type == "move_to_pose" and a.target is not None:
+        if a.target is not None:
             self.arm.move_to(a.target, a.v_max)
+        elif a.decl["duration"] == "streaming":
+            self.arm.servo()  # setpoints arrive on the command channel (AWP-CMD-003)
+            a.stream = {"frames_applied": 0, "last_seq": 0, "clamped_count": 0}
         else:
             self.arm.stop()
         if exiting_safe_state:
@@ -828,8 +988,11 @@ class World:
         reason: str | None = None,
         aborted: bool = False,
         progress: float | None = None,
+        blended: bool | None = None,
     ) -> None:
         was_executing = a.state in (ActionState.EXECUTING, ActionState.CANCELLING)
+        if a.approval_id is not None:
+            self._approvals.pop(a.approval_id, None)
         self._transition(
             s,
             a,
@@ -837,7 +1000,9 @@ class World:
             now,
             reason=reason,
             progress=progress,
+            blended=blended,
             aborted_at_progress=round(self.arm.progress, 4) if aborted else None,
+            stream=a.stream,
         )
         if s.running.get(a.group) is a:
             del s.running[a.group]
@@ -846,7 +1011,7 @@ class World:
             queue.remove(a)
         if a in s.staged:
             s.staged.remove(a)
-        if was_executing and a.type == "move_to_pose" and self.arm.phase is Phase.MOVING:
+        if was_executing and self.arm.phase in (Phase.MOVING, Phase.SERVO) and not blended:
             self.arm.stop()
 
     def _rpc_action_cancel(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
@@ -902,6 +1067,115 @@ class World:
                 return
             self._execute(s, a, now)
 
+    # ================================================================ approval
+
+    def _request_approval(self, s: Session, a: Action, now: int) -> None:
+        """AWP-APR-001: to every approver connection; logged in the requester's audit record."""
+        approval_id = "ap_" + secrets.token_hex(6)
+        expires = self._clock(s, now) + self.config.approval_timeout_ms * MS
+        a.approval_id = approval_id
+        self._approvals[approval_id] = (s.id, a.action_id, expires)
+        params: dict[str, Any] = {
+            "approval_id": approval_id,
+            "action_id": a.action_id,
+            "type": a.type,
+            "params": a.content["params"],
+            "requester": {"session": s.id, "embodiment": s.embodiment},
+            "expires_at_ns": expires,
+        }
+        if s.task is not None:
+            params["task"] = s.task  # AWP-TSK-005
+        msg = jsonrpc.notification("safety.approval_requested", params)
+        if self._audit is not None:
+            self._audit.record(s.id, self._clock(s, now), "world", msg)
+        for c in self._conns.values():
+            if c.approver and c.initialized:
+                self._out.append(Send(c.id, msg))
+
+    def _rpc_approval_respond(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
+        if not c.approver:
+            raise AwpError(ErrorCode.FORBIDDEN, "this connection may not decide approvals")
+        entry = self._approvals.get(p["approval_id"])
+        if entry is None:
+            raise AwpError(ErrorCode.PARAMS_INVALID, "unknown or already decided approval_id")
+        session_id, action_id, _ = entry
+        s = self.sessions[session_id]
+        a = s.actions[action_id]
+        if self._audit is not None:
+            self._audit.record(
+                s.id,
+                self._clock(s, now),
+                "approver",
+                jsonrpc.request(rid, "safety.approval.respond", p),
+            )
+        self._reply(c, rid, {})
+        if p["decision"] == "deny":
+            self._finish(s, a, ActionState.REJECTED, now, reason="approval_denied")  # AWP-APR-002
+            return
+        del self._approvals[p["approval_id"]]
+        a.approval_id = None
+        reason = self._still_valid(s, a, now)
+        if reason is not None:
+            self._transition(s, a, ActionState.REJECTED, now, reason=reason)
+        elif self._busy(s, a.group):
+            self._transition(s, a, ActionState.QUEUED, now)
+            s.queue(a.group).append(a)
+        else:
+            self._transition(s, a, ActionState.ACCEPTED, now)
+            if self.lockstep:
+                s.staged.append(a)
+            else:
+                self._execute(s, a, now)
+
+    def _check_approvals(self, now: int) -> None:
+        """AWP-APR-003: no decision by expires_at_ns (the session clock) is a rejection."""
+        for approval_id, (session_id, action_id, expires) in list(self._approvals.items()):
+            s = self.sessions.get(session_id)
+            if s is None or self._clock(s, now) <= expires:
+                continue
+            a = s.actions.get(action_id)
+            if a is not None and a.state is ActionState.PENDING_APPROVAL:
+                self._finish(s, a, ActionState.REJECTED, now, reason="approval_timeout")
+            self._approvals.pop(approval_id, None)
+
+    # ================================================================ transfer
+
+    def _rpc_session_transfer(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
+        s = c.session
+        assert s is not None
+        if s.embodiment is None:
+            raise AwpError(ErrorCode.FORBIDDEN, "only the holder of an embodiment can transfer it")
+        ttl = p.get("expires_in_ms", 30000)
+        token = "tt_" + secrets.token_urlsafe(18)
+        self._transfers[token] = (s.id, now + ttl * MS)
+        self._reply(c, rid, {"transfer_token": token, "expires_in_ms": ttl})
+
+    def _take_over(self, p: dict[str, Any], now: int) -> None:
+        """AWP-EMB-003: a single-use token from the holder moves the embodiment to this open."""
+        entry = self._transfers.pop(p.get("transfer_token", ""), None)
+        holder = self.sessions.get(entry[0]) if entry else None
+        if (
+            entry is None
+            or now > entry[1]
+            or holder is None
+            or holder.embodiment != p.get("embodiment")
+        ):
+            raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "invalid or expired transfer_token")
+        for a in list(holder.actions.values()):
+            if a.state is ActionState.EXECUTING:
+                self._finish(holder, a, ActionState.PREEMPTED, now, reason="transferred")
+            elif a.state is ActionState.CANCELLING:  # the abort ends as it would have (AWP-LIF-008)
+                state = ActionState.FAILED if a.failing_with else ActionState.CANCELLED
+                self._finish(
+                    holder, a, state, now, reason=a.failing_with or a.cancel_reason, aborted=True
+                )
+            elif a.state.pre_execution:
+                self._finish(holder, a, ActionState.CANCELLED, now, reason="transferred")
+        detail = {"embodiment": holder.embodiment}
+        holder.embodiment = None  # it continues as an observer session
+        self._holder = None
+        self._event(holder, "embodiment_transferred", now, detail)
+
     # ================================================================ execution
 
     def _step_arm(self, dt_ns: int) -> None:
@@ -923,6 +1197,14 @@ class World:
             elif aborting and self._abort_overdue(a, now):  # AWP-LIF-010
                 self._finish(s, a, ActionState.FAILED, now, reason="abort_failed", aborted=True)
                 self._enter_safe_state(s, now)
+            elif a.state is ActionState.EXECUTING and a.decl["duration"] == "streaming":
+                if now - a.last_frame_ns > a.decl["watchdog_ms"] * MS:  # AWP-CMD-005
+                    a.failing_with = "watchdog"
+                    a.cancel_started_ns = now
+                    self.arm.stop()
+                elif self._progress_due(a, now):
+                    a.last_progress_ns = now
+                    self._transition(s, a, ActionState.EXECUTING, now, stream=dict(a.stream or {}))
             elif a.state is ActionState.EXECUTING and not aborting:
                 if self.arm.phase is Phase.IDLE and self.arm.at_rest:
                     self._finish(s, a, ActionState.COMPLETED, now, progress=1.0)
@@ -1009,6 +1291,8 @@ class World:
     def _advance_tick(self, now: int) -> None:
         """One advance: statuses and events, then a frame per per-tick channel (AWP-TIM-003)."""
         self.tick += 1
+        self.advances += 1
+        self._check_approvals(now)
         for s in list(self.sessions.values()):
             for a in list(s.staged):
                 s.staged.remove(a)
@@ -1032,7 +1316,9 @@ class World:
             if embodiment is None
             else set(self.manifest["embodiments"][0]["channels"])
         )
-        return {n for n in names if self._channels[n]["modality"] in consumes}
+        return {
+            n for n in names if n in self._channels and self._channels[n]["modality"] in consumes
+        }
 
     def _rate(
         self, channel: str, requested: float | None, cap: float | None = None
@@ -1070,15 +1356,20 @@ class World:
     def _may_grant_admin(self, op: str, embodiment: str | None) -> bool:
         if op == "tick":
             return self.lockstep and embodiment is not None
-        if op == "reset":
-            return not any("reset" in other.admin for other in self.sessions.values())
-        return False  # snapshot and restore need capabilities this world does not offer
+        if op in ("reset", "restore"):  # at most one session at a time (AWP-PRM-005)
+            if op == "restore" and not self.config.has("sim"):
+                return False
+            return not any(op in other.admin for other in self.sessions.values())
+        return op == "snapshot" and self.config.has("sim")
 
     def _payload(self, channel: str) -> bytes:
         arm = self.arm
         if channel == "proprio":
+            noise = self.config.has("sim")
             body: dict[str, Any] = {
-                "p_m": [round(v, 6) for v in arm.position],
+                "p_m": [
+                    round(v + (self.rng.gauss(0, 1e-4) if noise else 0), 6) for v in arm.position
+                ],
                 "v_mps": [round(v, 6) for v in arm.velocity],
             }
         else:
@@ -1094,6 +1385,8 @@ class World:
         return json.dumps(body, separators=(",", ":")).encode()
 
     def _emit_frame(self, s: Session, g: ChannelGrant, now: int) -> None:
+        if g.command:
+            return  # agent→world
         if s.conn is None or (s.stream_conn is None and s.stream_lost_ns is not None):
             return  # no control connection, or the channel waits for its stream (AWP-TRN-010)
         g.seq += 1
@@ -1105,6 +1398,7 @@ class World:
             keyframe=True,
             resync=g.resync,
             tick=self.tick if self.lockstep else None,
+            ts_sim_ns=self._sim_ns() if self.lockstep else None,
         )
         g.resync = False
         streaming_lw = not self.lockstep and g.loss_class == "latest-wins"
@@ -1117,9 +1411,38 @@ class World:
             self._to_session(s, inline, latest_wins=streaming_lw)
         self._activate(s, now)
 
+    # ================================================================ command channels
+
+    def _on_command_frame(self, s: Session, frame: Frame, now: int) -> None:
+        """A setpoint: applied only while its servo action executes (AWP-CMD-003), in seq order
+        (AWP-CMD-007), and envelope-checked before actuation (AWP-CMD-006)."""
+        grant = s.grants.get(SERVO_CHANNEL)
+        a = s.running.get("arm_motion")
+        if grant is None or frame.channel_id != grant.channel_id or a is None:
+            return
+        if a.decl["duration"] != "streaming" or a.state is not ActionState.EXECUTING:
+            return
+        if a.failing_with is not None or frame.seq <= a.command_seq:
+            return
+        try:
+            v = json.loads(frame.payload)["v_mps"]
+            velocity = (float(v[0]), float(v[1]), float(v[2]))
+        except (ValueError, KeyError, TypeError, IndexError):
+            return
+        assert a.stream is not None
+        a.command_seq = frame.seq
+        a.last_frame_ns = now
+        s.telemetry.command.append(max(0, self._clock(s, now) - frame.ts_mono_ns))
+        if sum(x * x for x in velocity) ** 0.5 > self.config.max_velocity_mps:
+            a.stream["clamped_count"] += 1  # on_violation: reject drops the frame
+            return
+        self.arm.command(velocity)
+        a.stream["frames_applied"] += 1
+        a.stream["last_seq"] = frame.seq
+
     def _stream_frames(self, s: Session, now: int) -> None:
         for g in s.grants.values():
-            if g.rate_hz is None or now < g.next_due_ns:
+            if g.command or g.rate_hz is None or now < g.next_due_ns:
                 continue
             period = round(S / g.rate_hz)
             g.next_due_ns = max(g.next_due_ns + period, now - period)
@@ -1250,3 +1573,40 @@ class World:
         s.conn = None
         if self._audit is not None:
             self._audit.close(s.id)
+
+
+def encode_state(state: dict[str, Any]) -> dict[str, Any]:
+    """`World.world_state()` as JSON, for replay bundles."""
+    arm = {f.name: getattr(state["arm"], f.name) for f in fields(Arm)}
+    version, internal, gauss = state["rng"]
+    return {
+        "arm": json.loads(json.dumps(arm)),
+        "tick": state["tick"],
+        "rng": [version, list(internal), gauss],
+    }
+
+
+def decode_state(data: dict[str, Any]) -> dict[str, Any]:
+    def tuples(v: Any) -> Any:
+        return tuple(tuples(x) for x in v) if isinstance(v, list) else v
+
+    arm = {k: tuples(v) for k, v in data["arm"].items()}
+    arm["phase"] = Phase(arm["phase"])
+    version, internal, gauss = data["rng"]
+    return {"arm": Arm(**arm), "tick": data["tick"], "rng": (version, tuple(internal), gauss)}
+
+
+def encode_config(config: WorldConfig) -> dict[str, Any]:
+    out = asdict(config)
+    out["features"] = sorted(config.features)
+    encoded: dict[str, Any] = json.loads(json.dumps(out))
+    return encoded
+
+
+def decode_config(data: dict[str, Any]) -> WorldConfig:
+    def tuples(v: Any) -> Any:
+        return tuple(tuples(x) for x in v) if isinstance(v, list) else v
+
+    return WorldConfig(
+        **{**data, "features": frozenset(data["features"]), "aabb_m": tuples(data["aabb_m"])}
+    )

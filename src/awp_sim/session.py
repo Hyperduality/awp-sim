@@ -21,6 +21,7 @@ class ChannelGrant:
     seq: int = 0
     next_due_ns: int = 0
     resync: bool = False
+    command: bool = False  # an agent→world command channel (AWP-CMD-002)
 
     def to_wire(self) -> dict[str, Any]:
         return {"channel": self.name, "rate_hz": self.rate_hz, "channel_id": self.channel_id}
@@ -40,6 +41,11 @@ class Action:
     cancel_reason: str | None = None
     cancel_started_ns: int | None = None
     replaces: bool = False
+    blends: bool = False
+    approval_id: str | None = None
+    stream: dict[str, int] | None = None  # streaming-duration progress (AWP-CMD-004)
+    last_frame_ns: int = 0
+    command_seq: int = 0
     failing_with: str | None = None  # terminal reason to report once the safe abort completes
     last_progress_ns: int = 0
     terminal_ns: int | None = None
@@ -59,6 +65,7 @@ class Telemetry:
     admission: list[int] = field(default_factory=list)
     observation_to_action: list[int] = field(default_factory=list)
     channels: dict[int, list[int]] = field(default_factory=dict)
+    command: list[int] = field(default_factory=list)
 
     def snapshot(self, window_ms: int) -> dict[str, Any]:
         params: dict[str, Any] = {"window_ms": window_ms}
@@ -66,6 +73,7 @@ class Telemetry:
             ("observation_latency_ns", self.observation),
             ("admission_latency_ns", self.admission),
             ("observation_to_action_ns", self.observation_to_action),
+            ("command_latency_ns", self.command),
         ):
             if values:
                 params[key] = stats(values)
@@ -108,6 +116,7 @@ class Session:
     last_agent_ns: int = 0
     last_admitted_ns: int | None = None
     suspended_ns: int | None = None
+    task: dict[str, Any] | None = None
     stream_conn: Hashable | None = None
     stream_lost_ns: int | None = None
     stream_degraded_reported: bool = False

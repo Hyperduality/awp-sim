@@ -15,7 +15,7 @@ from pathlib import Path
 
 from . import __version__, scenarios
 from .audit import AuditLog
-from .config import WorldConfig
+from .config import FEATURES, WorldConfig
 from .server import Server
 from .world import World
 
@@ -52,6 +52,22 @@ def _parser() -> argparse.ArgumentParser:
     )
     s.add_argument("--record-dir", type=Path, help="write per-session wire traces here")
     s.add_argument(
+        "--replay-dir",
+        type=Path,
+        help="write replay bundles instead of audit records (lockstep, --features sim)",
+    )
+    s.add_argument(
+        "--features",
+        default="",
+        help=f"comma-separated features beyond Core: {', '.join(sorted(FEATURES))}",
+    )
+    s.add_argument(
+        "--approver-token",
+        default=os.environ.get("AWP_SIM_APPROVER_TOKEN"),
+        help="bearer token of approver connections (with --features approval)",
+    )
+    s.add_argument("--approval-timeout-ms", type=int, default=60000)
+    s.add_argument(
         "--stream-binding",
         choices=["inline", "ws"],
         default="inline",
@@ -76,18 +92,32 @@ def _parser() -> argparse.ArgumentParser:
     d.add_argument("--url", default="ws://127.0.0.1:8710")
     d.add_argument("--token", default=os.environ.get("AWP_SIM_TOKEN"))
 
+    r = sub.add_parser("replay", help="replay a replay bundle and compare (AWP-REP-003)")
+    r.add_argument("bundle", type=Path)
+
     m = sub.add_parser("manifest", help="print the world manifest")
     m.add_argument("--mode", choices=["streaming", "lockstep"], default="streaming")
+    m.add_argument("--features", default="")
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "manifest":
-        print(json.dumps(WorldConfig(mode=args.mode).manifest(), indent=2))
+        features = frozenset(f for f in args.features.split(",") if f)
+        print(json.dumps(WorldConfig(mode=args.mode, features=features).manifest(), indent=2))
         return 0
     if args.command == "scenarios":
         return _scenarios(args)
+    if args.command == "replay":
+        from .replay import replay
+
+        outcome = replay(args.bundle)
+        if outcome.reproduced:
+            print(f"reproduced {outcome.frames} frames and {outcome.transitions} transitions")
+            return 0
+        print(f"not reproduced: {outcome.difference}", file=sys.stderr)
+        return 1
     if args.command == "demo":
         from websockets.exceptions import InvalidHandshake
 
@@ -132,19 +162,39 @@ def _serve(args: argparse.Namespace) -> int:
     logging.basicConfig(
         level=args.log_level.upper(), format="%(asctime)s %(levelname)s %(message)s"
     )
-    config = WorldConfig(
+    try:
+        config = _config(args)
+    except ValueError as err:
+        print(f"awp-sim: {err}", file=sys.stderr)
+        return 2
+    tls = None
+    if args.tls_cert:
+        tls = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        tls.load_cert_chain(args.tls_cert, args.tls_key)
+    return _run_server(args, config, tls)
+
+
+def _config(args: argparse.Namespace) -> WorldConfig:
+    return WorldConfig(
         mode=args.mode,
         watchdog_ms=args.watchdog_ms,
         heartbeat_interval_ms=args.heartbeat_ms,
         reconnect_window_ms=args.reconnect_window_ms,
         tick_ms=args.tick_ms,
         max_duration_ms=args.max_duration_ms,
+        features=frozenset(f for f in args.features.split(",") if f),
+        approval_timeout_ms=args.approval_timeout_ms,
     )
-    tls = None
-    if args.tls_cert:
-        tls = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        tls.load_cert_chain(args.tls_cert, args.tls_key)
-    audit = None if args.no_audit else AuditLog(args.audit_dir)
+
+
+def _run_server(args: argparse.Namespace, config: WorldConfig, tls: ssl.SSLContext | None) -> int:
+    if args.replay_dir is not None:
+        if not config.has("sim"):
+            print("awp-sim: --replay-dir needs --mode lockstep --features sim", file=sys.stderr)
+            return 2
+        audit: AuditLog | None = AuditLog(args.replay_dir, bundle=True)
+    else:
+        audit = None if args.no_audit else AuditLog(args.audit_dir)
     world = World(config, audit=audit)
     try:
         server = Server(
@@ -156,6 +206,7 @@ def _serve(args: argparse.Namespace) -> int:
             allow_insecure=args.insecure,
             record_dir=args.record_dir,
             stream_binding=args.stream_binding == "ws",
+            approver_token=args.approver_token,
         )
     except ValueError as err:
         print(f"awp-sim: {err}", file=sys.stderr)

@@ -60,7 +60,10 @@ class AuditLog:
     are still logged by hash, as frames on any other channel would be.
     """
 
-    def __init__(self, directory: Path | str, *, redact_paths: Iterable[str] = ()) -> None:
+    def __init__(
+        self, directory: Path | str, *, redact_paths: Iterable[str] = (), bundle: bool = False
+    ) -> None:
+        self.bundle = bundle  # a replay bundle: full payloads and the initial state (AWP-AUD-007)
         self.directory = Path(directory)
         self.directory.mkdir(parents=True, exist_ok=True)
         self.redact_paths = list(redact_paths)
@@ -68,13 +71,17 @@ class AuditLog:
         self._prev: dict[str, str] = {}
 
     def open(self, session_id: str, header: dict[str, Any]) -> None:
+        if not self.bundle:  # only a replay bundle carries the initial snapshot
+            header = {
+                k: v for k, v in header.items() if k not in ("snapshot_token", "initial_state")
+            }
         self._files[session_id] = (self.directory / f"{session_id}.jsonl").open(
             "a", encoding="utf-8"
         )
         self._write(
             session_id,
             {
-                "class": "audit_record",
+                "class": "replay_bundle" if self.bundle else "audit_record",
                 "ts_mono_ns": 0,
                 "direction": "world",
                 "kind": "header",
@@ -88,7 +95,8 @@ class AuditLog:
         if msg.get("method") in ("obs.frame", "cmd.frame"):
             params = msg["params"]
             payload = base64.b64decode(params.get("payload_b64", ""))  # the payload, not its text
-            body: dict[str, Any] = {k: v for k, v in params.items() if k != "payload_b64"}
+            keep = self.bundle  # a bundle keeps what the agent saw; a record, only its hash
+            body: dict[str, Any] = {k: v for k, v in params.items() if keep or k != "payload_b64"}
             body["method"] = msg["method"]
             body["payload_sha256"] = hashlib.sha256(payload).hexdigest()
             kind = "frame"

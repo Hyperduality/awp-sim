@@ -17,6 +17,7 @@ class Phase(StrEnum):
     IDLE = "idle"
     MOVING = "moving"
     STOPPING = "stopping"
+    SERVO = "servo"  # following velocity setpoints from a command channel
 
 
 @dataclass(slots=True)
@@ -32,6 +33,9 @@ class Arm:
     _length: float = 0.0
     _travelled: float = 0.0
     _v_max: float = 0.0
+    _servo_target: Vec3 = (0.0, 0.0, 0.0)
+    _servo_velocity: Vec3 = (0.0, 0.0, 0.0)
+    bounds: tuple[Vec3, Vec3] | None = None
 
     @property
     def target(self) -> Vec3 | None:
@@ -49,6 +53,8 @@ class Arm:
 
     @property
     def velocity(self) -> Vec3:
+        if self.phase is Phase.SERVO:
+            return self._servo_velocity
         if self._target is None or self._length == 0:
             return (0.0, 0.0, 0.0)
         d = _direction(self._start, self._target, self._length)
@@ -62,8 +68,33 @@ class Arm:
         self._v_max = v_max
         self.phase = Phase.MOVING if self._length > 0 else Phase.IDLE
 
+    def servo(self) -> None:
+        """Follow velocity setpoints (`command`) until stopped."""
+        self._servo_velocity = self.velocity if self.phase is not Phase.IDLE else (0.0, 0.0, 0.0)
+        self._servo_target = (0.0, 0.0, 0.0)
+        self.speed = math.hypot(*self._servo_velocity)
+        self._target = None
+        self.phase = Phase.SERVO
+
+    def command(self, v: Vec3) -> None:
+        self._servo_target = v
+
     def stop(self) -> None:
         """Decelerate to rest along the current path."""
+        if self.phase is Phase.SERVO:
+            v = self._servo_velocity
+            speed = math.hypot(*v)
+            self._start = self.position
+            if speed == 0:
+                self.phase = Phase.IDLE
+                return
+            ahead = (v[0] / speed, v[1] / speed, v[2] / speed)
+            self._target = tuple(p + d for p, d in zip(self.position, ahead, strict=True))  # type: ignore[assignment]
+            self._length = 1.0
+            self._travelled = 0.0
+            self.speed = speed
+            self.phase = Phase.STOPPING
+            return
         if self.phase is Phase.MOVING or self.speed > 0:
             self.phase = Phase.STOPPING
 
@@ -79,7 +110,12 @@ class Arm:
         self._length = self._travelled = 0.0
 
     def step(self, dt_s: float) -> None:
-        if dt_s <= 0 or self._target is None:
+        if dt_s <= 0:
+            return
+        if self.phase is Phase.SERVO:
+            self._step_servo(dt_s)
+            return
+        if self._target is None:
             return
         if self.phase is Phase.MOVING:
             remaining = self._length - self._travelled
@@ -95,6 +131,24 @@ class Arm:
             self.speed = new_speed
             if self.speed == 0.0:
                 self.phase = Phase.IDLE
+
+    def _step_servo(self, dt_s: float) -> None:
+        v, goal = self._servo_velocity, self._servo_target
+        dv = tuple(g - c for g, c in zip(goal, v, strict=True))
+        mag = math.hypot(*dv)
+        limit = self.accel_mps2 * dt_s
+        if mag > limit:
+            dv = tuple(d * limit / mag for d in dv)
+        v = (v[0] + dv[0], v[1] + dv[1], v[2] + dv[2])
+        p = tuple(pos + vel * dt_s for pos, vel in zip(self.position, v, strict=True))
+        if self.bounds is not None:
+            lo, hi = self.bounds
+            clamped = tuple(min(max(x, a), b) for x, a, b in zip(p, lo, hi, strict=True))
+            v = tuple(0.0 if c != x else vel for c, x, vel in zip(clamped, p, v, strict=True))  # type: ignore[assignment]
+            p = clamped
+        self.position = (p[0], p[1], p[2])
+        self._servo_velocity = (v[0], v[1], v[2])
+        self.speed = math.hypot(*v)
 
     def _advance(self, distance: float) -> None:
         self._travelled += distance

@@ -11,6 +11,13 @@ Mode = Literal["lockstep", "streaming"]
 
 EMBODIMENT = "arm_01"
 HOME: tuple[float, float, float] = (0.0, 0.0, 0.4)
+PARK: tuple[float, float, float] = (0.0, 0.0, 0.25)
+SERVO_CHANNEL = "servo_arm"
+
+# Beyond Core, each off by default: task (AWP-TSK), approval of `park` (AWP-APR), blend preemption
+# (AWP-PRE-004), embodiment transfer (AWP-EMB-003), sim-profile seeding, snapshots, and replay
+# (AWP-REP, lockstep), and a servo command channel (AWP-CMD, streaming).
+FEATURES = frozenset({"task", "approval", "blend", "transfer", "sim", "servo"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +41,10 @@ class WorldConfig:
     max_velocity_mps: float = 0.5
     max_action_rate_hz: float = 20.0
     accel_mps2: float = 2.0
+    features: frozenset[str] = frozenset()
+    approval_timeout_ms: int = 60000
+    servo_watchdog_ms: int = 200
+    servo_hz: float = 200.0
     extensions: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -41,6 +52,13 @@ class WorldConfig:
             raise ValueError("watchdog_ms must be ≤ reconnect_window_ms (AWP-SAF-003)")
         if self.heartbeat_interval_ms < 100:
             raise ValueError("heartbeat_interval_ms must be ≥ 100")
+        unknown = set(self.features) - FEATURES
+        if unknown:
+            raise ValueError(f"unknown features {sorted(unknown)}; known: {sorted(FEATURES)}")
+        if "servo" in self.features and self.mode != "streaming":
+            raise ValueError("command channels are streaming-only (AWP-CMD-001)")
+        if "sim" in self.features and self.mode != "lockstep":
+            raise ValueError("the sim feature needs lockstep: its determinism is lockstep's")
 
     @property
     def envelope(self) -> dict[str, Any]:
@@ -53,9 +71,28 @@ class WorldConfig:
             "on_violation": "reject",
         }
 
+    def has(self, feature: str) -> bool:
+        return feature in self.features
+
     def manifest(self) -> dict[str, Any]:
         lockstep = self.mode == "lockstep"
         safety: dict[str, Any] = {"envelopes": [self.envelope]}
+        if self.has("approval"):
+            safety["approval_timeout_ms"] = self.approval_timeout_ms
+        capabilities: dict[str, Any] = {}
+        if self.has("task"):
+            capabilities["task"] = True
+        if self.has("sim"):
+            capabilities.update(seed=True, snapshot=True, replay=True)
+        if self.has("servo"):
+            capabilities["command_channels"] = True
+        action_types = ["move_to_pose", "stop"]
+        if self.has("approval"):
+            action_types.append("park")
+        if self.has("servo"):
+            action_types.append("servo")
+        channels = ["proprio", "arm_state"] + ([SERVO_CHANNEL] if self.has("servo") else [])
+        move_policies = ["replace", "queue", "reject"] + (["blend"] if self.has("blend") else [])
         if not lockstep:
             safety["safe_state"] = {"behavior": "safe_stop", "watchdog_ms": self.watchdog_ms}
             safety["max_basis_age_ms"] = self.max_basis_age_ms
@@ -63,14 +100,14 @@ class WorldConfig:
             "protocol_version": "0.1",
             "world": {"name": "awp-sim", "version": __version__, "vendor": "hyperduality"},
             "time_models": [self.mode],
-            "capabilities": {},
+            "capabilities": capabilities,
             "initial_states": ["home"],
             "embodiments": [
                 {
                     "id": EMBODIMENT,
                     "kind": "manipulator",
-                    "action_types": ["move_to_pose", "stop"],
-                    "channels": ["proprio", "arm_state"],
+                    "action_types": action_types,
+                    "channels": channels,
                 }
             ],
             "observation_channels": [
@@ -103,7 +140,7 @@ class WorldConfig:
                     "type": "move_to_pose",
                     "params_schema": {"$ref": "#/$defs/move_to_pose_params"},
                     "duration": "extended",
-                    "preemption": ["replace", "queue", "reject"],
+                    "preemption": move_policies,
                     "concurrency_group": "arm_motion",
                     "max_queue": 4,
                     "max_abort_ms": self.max_abort_ms,
@@ -134,6 +171,44 @@ class WorldConfig:
                 }
             },
         }
+        if self.has("approval"):
+            manifest["action_schemas"].append(
+                {
+                    "type": "park",
+                    "params_schema": {"type": "object", "additionalProperties": False},
+                    "duration": "extended",
+                    "preemption": "queue",
+                    "concurrency_group": "arm_motion",
+                    "max_queue": 4,
+                    "requires_approval": True,
+                    "max_abort_ms": self.max_abort_ms,
+                    "max_duration_ms": self.max_duration_ms,
+                    "description": "Move to the park pose; needs an approver's decision.",
+                }
+            )
+        if self.has("servo"):
+            manifest["command_channels"] = [
+                {
+                    "id": SERVO_CHANNEL,
+                    "modality": "servo/json",
+                    "rate_hz": self.servo_hz,
+                    "loss_class": "latest-wins",
+                    "schema": {"fields": ["v_mps"], "frame": "base"},
+                }
+            ]
+            manifest["action_schemas"].append(
+                {
+                    "type": "servo",
+                    "params_schema": {"type": "object", "additionalProperties": False},
+                    "duration": "streaming",
+                    "command_channel": SERVO_CHANNEL,
+                    "watchdog_ms": self.servo_watchdog_ms,
+                    "preemption": ["replace", "reject"],
+                    "concurrency_group": "arm_motion",
+                    "max_abort_ms": self.max_abort_ms,
+                    "description": "Follow end-effector velocity setpoints on servo_arm.",
+                }
+            )
         if lockstep:
             manifest["tick_policy"] = "on_tick"
             manifest["tick_authority"] = "any_session"

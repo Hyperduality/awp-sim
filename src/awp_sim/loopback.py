@@ -103,7 +103,9 @@ class LoopbackAgent:
         agent: dict[str, str] | None = None,
         modalities: Iterable[str] = ("proprio/json", "text/event+json"),
         heartbeat_ms: float | None = 500,
+        approver: bool = False,
     ) -> None:
+        self.approver = approver
         self.net = net
         self.name = name
         self.offset = clock_offset_ns
@@ -127,7 +129,7 @@ class LoopbackAgent:
         if self.conn is not None:
             self.drop()
         self.conn = next(self.net._conn_ids)
-        self.net.deliver(self.net.world.connect(self.conn, self.net.now))
+        self.net.deliver(self.net.world.connect(self.conn, self.net.now, approver=self.approver))
 
     def attach_stream(self) -> None:
         """Open a stream connection with the session token (AWP-TRN-003, AWP-SEC-004)."""

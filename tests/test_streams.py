@@ -11,6 +11,7 @@ from websockets.typing import Subprotocol
 
 from awp.aio import AsyncClient
 from awp.client import ClientConnection, FrameReceived, ProtocolViolation
+from awp.frames import Frame
 from awp_sim.config import WorldConfig
 from awp_sim.server import Server
 from awp_sim.world import World
@@ -45,11 +46,12 @@ def test_channels_move_to_the_stream_connection_with_a_resync_keyframe():
     net.advance(300)
     assert inline_frames(a) == before  # nothing inline once the channel moved (AWP-TRN-012)
     frames = [e for e in a.of(FrameReceived) if e.frame.ts_send_ns is not None]
-    first = {}
+    first: dict[str, Frame] = {}
     for e in a.of(FrameReceived)[before:]:
         first.setdefault(e.channel, e.frame)
     assert all(f.resync and f.keyframe for f in first.values())
-    assert frames and all(f.frame.ts_send_ns >= f.frame.ts_mono_ns for f in frames)
+    assert frames
+    assert all(f.frame.ts_send_ns >= f.frame.ts_mono_ns for f in frames)
     assert not a.of(ProtocolViolation)
 
 
@@ -65,12 +67,13 @@ def test_a_lost_stream_withholds_frames_and_degrades_reliable_channels():
     a.attach_stream()
     net.advance(50)
     resumed = a.of(FrameReceived)[count:]
-    assert resumed and all(e.frame.resync for e in resumed[:2])
+    assert resumed
+    assert all(e.frame.resync for e in resumed[:2])
     assert not a.of(ProtocolViolation)
 
 
 def test_a_stream_needs_the_session_token():
-    net, a = streamed()
+    net, _ = streamed()
     out = net.world.attach_stream(99, "st_not_a_token", net.now)
     assert [type(o).__name__ for o in out] == ["Close"]  # AWP-SEC-004
 
@@ -90,7 +93,7 @@ def test_suspension_closes_the_stream_and_resumption_goes_inline():
 
 
 def test_lockstep_frames_on_the_stream_carry_their_tick():
-    net, a = streamed(mode="lockstep")
+    _, a = streamed(mode="lockstep")
     a.attach_stream()
     a.submit("move_to_pose", pose(0.3, 0.2, 0.5))
     tick = a.call(a.client.advance(3))["tick"]
