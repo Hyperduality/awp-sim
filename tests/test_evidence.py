@@ -18,7 +18,7 @@ from awp_sim.config import FEATURES, WorldConfig
 from awp_sim.server import _Outbox
 from awp_sim.world import Send
 
-from .helpers import make_net, pose
+from .helpers import assert_wire_valid, events, make_net, pose, statuses
 
 # ------------------------------------------------------------ AWP-DAT-002, AWP-TRN-009
 
@@ -44,11 +44,42 @@ def test_a_stalled_receiver_holds_one_frame_per_latest_wins_channel():
 # ------------------------------------------------------------ AWP-ENV-003
 
 
+def inside(net, config: WorldConfig) -> bool:
+    (lo, hi), arm = config.aabb_m, net.world.arm
+    within = all(lo[i] - 1e-9 <= arm.position[i] <= hi[i] + 1e-9 for i in range(3))
+    return within and arm.speed <= config.max_velocity_mps + 1e-9
+
+
 @pytest.mark.parametrize("mode", ["lockstep", "streaming"])
-def test_motion_never_leaves_the_envelope(mode):
-    """No disturbance is modelled, and no admitted motion leaves the envelope, so the condition
-    AWP-ENV-003 governs cannot arise: seeded random moves, replacements, queues, stops, and
-    cancels, checked after every millisecond of simulated time."""
+def test_a_disturbance_during_execution_fails_the_action(mode):
+    net = make_net(mode=mode)
+    a = net.agent(heartbeat_ms=None if mode == "lockstep" else 500)
+    a.open(mode=mode, embodiment="arm_01")
+    action = a.submit("move_to_pose", pose(0.4, 0.4, 0.6))
+
+    def step():
+        if mode == "lockstep":
+            a.call(a.client.advance())
+        else:
+            net.advance(20)
+
+    step()
+    step()
+    assert a.client.actions[action].state == "executing"
+    net.world.disturb((0.0, 0.0, 1.0))  # pushed above the envelope
+    for _ in range(100):
+        if a.client.actions[action].terminal:
+            break
+        step()
+    assert "envelope_violation" in events(a)
+    assert statuses(a, action)[-1] == ("failed", "envelope")
+    assert_wire_valid(a)
+
+
+@pytest.mark.parametrize("mode", ["lockstep", "streaming"])
+def test_commanded_motion_never_leaves_the_envelope(mode):
+    """Seeded random moves, replacements, queues, stops, and cancels, checked after every
+    advance: without a disturbance the arm stays within the envelope."""
     config = WorldConfig(mode=mode)
     (lo, hi), v_max = config.aabb_m, config.max_velocity_mps
     net = make_net(mode=mode, watchdog_ms=config.reconnect_window_ms)
@@ -77,14 +108,36 @@ def test_motion_never_leaves_the_envelope(mode):
                 a.call(a.client.advance())
             else:
                 net.advance(20)
-            arm = net.world.arm
-            assert all(lo[i] - 1e-9 <= arm.position[i] <= hi[i] + 1e-9 for i in range(3))
-            assert arm.speed <= v_max + 1e-9
+            assert inside(net, config)
+    assert "envelope_violation" not in events(a)
+
+
+def test_servo_motion_never_leaves_the_envelope():
+    """Setpoints toward the walls, and stops during them."""
+    config = WorldConfig(mode="streaming", features=frozenset({"servo"}))
+    net = make_net(mode="streaming", features=config.features)
+    a = net.agent(heartbeat_ms=100)
+    a.open(mode="streaming", embodiment="arm_01")
+    rng = random.Random(7)
+    for _ in range(60):
+        action = a.submit("servo", {})
+        direction = [rng.uniform(-1, 1) for _ in range(3)]
+        norm = sum(x * x for x in direction) ** 0.5
+        v = [x / norm * config.max_velocity_mps * rng.uniform(0.5, 1.0) for x in direction]
+        for _ in range(rng.randint(10, 150)):
+            a.client.command("servo_arm", {"v_mps": v})
+            net.advance(10)
+            assert inside(net, config)
+        a.call(a.client.cancel(action))
+        while not a.client.actions[action].terminal:
+            net.advance(10)
+            assert inside(net, config)
+    assert "envelope_violation" not in events(a)
 
 
 # ------------------------------------------------------------ AWP-UNI-001
 
-SI_SUFFIXES = ("_m", "_rad", "_s", "_ns", "_mps", "_radps", "_n", "_nm", "_kg", "_hz")
+SI_SUFFIXES = ("_m", "_rad", "_s", "_ms", "_ns", "_mps", "_radps", "_n", "_nm", "_kg", "_hz")
 # Reviewed: names awp-sim defines that carry no physical quantity.
 NOT_PHYSICAL = {"pose", "frame", "q", "phase", "action_id"}
 

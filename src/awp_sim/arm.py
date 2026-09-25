@@ -89,8 +89,10 @@ class Arm:
                 self.phase = Phase.IDLE
                 return
             ahead = (v[0] / speed, v[1] / speed, v[2] / speed)
-            self._target = tuple(p + d for p, d in zip(self.position, ahead, strict=True))  # type: ignore[assignment]
-            self._length = 1.0
+            self._length = self._room(ahead)
+            self._target = tuple(
+                p + d * self._length for p, d in zip(self.position, ahead, strict=True)
+            )  # type: ignore[assignment]
             self._travelled = 0.0
             self.speed = speed
             self.phase = Phase.STOPPING
@@ -128,7 +130,7 @@ class Arm:
         elif self.phase is Phase.STOPPING and not self.stuck:
             new_speed = max(0.0, self.speed - self.accel_mps2 * dt_s)
             self._advance(min((self.speed + new_speed) / 2 * dt_s, self._length - self._travelled))
-            self.speed = new_speed
+            self.speed = new_speed if self._length - self._travelled > 1e-9 else 0.0
             if self.speed == 0.0:
                 self.phase = Phase.IDLE
 
@@ -149,6 +151,18 @@ class Arm:
         self.position = (p[0], p[1], p[2])
         self._servo_velocity = (v[0], v[1], v[2])
         self.speed = math.hypot(*v)
+
+    def _room(self, d: Vec3) -> float:
+        """How far the arm can travel along the unit vector `d` and stay within `bounds`."""
+        if self.bounds is None:
+            return 1.0
+        room = 1.0
+        for p, di, lo, hi in zip(self.position, d, *self.bounds, strict=True):
+            if di > 0:
+                room = min(room, (hi - p) / di)
+            elif di < 0:
+                room = min(room, (lo - p) / di)
+        return max(room, 0.0)
 
     def _advance(self, distance: float) -> None:
         self._travelled += distance

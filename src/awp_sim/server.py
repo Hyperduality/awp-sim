@@ -201,6 +201,9 @@ class Server:
     def release_estop(self) -> None:
         self._dispatch(self.world.release_estop(time.monotonic_ns()))
 
+    def disturb(self, offset_m: tuple[float, float, float]) -> None:
+        self.world.disturb(offset_m)
+
     # ------------------------------------------------------------ handshake
 
     def _authorize(self, connection: ServerConnection, request: Request) -> Response | None:
