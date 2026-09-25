@@ -9,7 +9,9 @@ It targets specification revision **`0.1-draft.7`**, pinned as the `spec/` submo
 
 ## Status
 
-The world and client target **Core World** and **Core Agent** for both time models, and the world the **sim** profile in lockstep, *self-assessed against 0.1-draft.7*: [awp-conformance](https://github.com/Hyperduality/awp-conformance) reports no failure against any configuration and leaves a few requirements untested. Every recorded trace also passes the spec's own checker, which verifies schemas, the action lifecycle table, idempotency, replay, and frame sequencing.
+![AWP: Core World (lockstep), AWP-conformant against 0.1-draft.7](https://img.shields.io/badge/AWP-Core_World_%28lockstep%29%2C_conformant_0.1--draft.7-555)
+
+The world is **Core World (lockstep): AWP-conformant against 0.1-draft.7**: [awp-conformance](https://github.com/Hyperduality/awp-conformance) reports no failure and nothing untested, and [`conformance/`](conformance/README.md) holds the report and the evidence for its manual rows. Core World in streaming, the **sim** profile in lockstep, and the client as **Core Agent** in both time models are *self-assessed against 0.1-draft.7*: the suite reports no failure against any configuration and leaves a few requirements untested. Every recorded trace also passes the spec's own checker, which verifies schemas, the action lifecycle table, idempotency, replay, and frame sequencing.
 
 | Implemented | Not implemented |
 |---|---|

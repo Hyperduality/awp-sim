@@ -1,0 +1,1656 @@
+{
+  "suite": {
+    "name": "awp-conformance",
+    "version": "0.1.0a1"
+  },
+  "specification": "0.1-draft.7",
+  "target": "ws://127.0.0.1:8720",
+  "side": "world",
+  "generated": "2026-09-25T15:04:19Z",
+  "claim": {
+    "status": "conformant",
+    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.7 (awp-conformance 0.1.0a1)",
+    "classes": [
+      "Core World"
+    ],
+    "modes": [
+      "lockstep"
+    ],
+    "failed": [],
+    "untested": [],
+    "manual_evidence_required": [
+      "AWP-DAT-002",
+      "AWP-DAT-008",
+      "AWP-ENV-003",
+      "AWP-UNI-001",
+      "AWP-VER-009"
+    ],
+    "counts": {
+      "manual": 5,
+      "n/a": 98,
+      "pass": 123,
+      "untestable": 10
+    }
+  },
+  "requirements": [
+    {
+      "id": "AWP-ACT-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "5 check(s): lockstep/idempotency"
+    },
+    {
+      "id": "AWP-ACT-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/admission-refusals"
+    },
+    {
+      "id": "AWP-ACT-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/grants"
+    },
+    {
+      "id": "AWP-ACT-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "deadline_ms is advisory in lockstep and MAY be ignored"
+    },
+    {
+      "id": "AWP-ACT-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/admission-refusals"
+    },
+    {
+      "id": "AWP-ACT-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/idempotency"
+    },
+    {
+      "id": "AWP-ACT-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/lifecycle-complete"
+    },
+    {
+      "id": "AWP-ACT-008",
+      "level": "MAY",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-ACT-009",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/idempotency"
+    },
+    {
+      "id": "AWP-ACT-010",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "22 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/determinism, lockstep/estop, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-AGM-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-AGM-002",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "lockstep frames come one per advance, not at a rate"
+    },
+    {
+      "id": "AWP-AGT-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-008",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-AGT-009",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-APR-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "requires_approval: no"
+    },
+    {
+      "id": "AWP-APR-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "requires_approval: no"
+    },
+    {
+      "id": "AWP-APR-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "requires_approval: no"
+    },
+    {
+      "id": "AWP-APR-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "requires_approval: no"
+    },
+    {
+      "id": "AWP-APR-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "requires_approval: no"
+    },
+    {
+      "id": "AWP-APR-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "requires_approval: no"
+    },
+    {
+      "id": "AWP-APR-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "requires_approval: no"
+    },
+    {
+      "id": "AWP-AUD-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/audit-log"
+    },
+    {
+      "id": "AWP-AUD-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/audit-log"
+    },
+    {
+      "id": "AWP-AUD-003",
+      "level": "SHOULD",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/audit-log"
+    },
+    {
+      "id": "AWP-AUD-004",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-AUD-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability replay not advertised"
+    },
+    {
+      "id": "AWP-AUD-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/audit-log"
+    },
+    {
+      "id": "AWP-AUD-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/audit-log"
+    },
+    {
+      "id": "AWP-AV-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile realtime-av not claimed"
+    },
+    {
+      "id": "AWP-AV-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile realtime-av not claimed"
+    },
+    {
+      "id": "AWP-CLK-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "42 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-CLK-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-CLK-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "sim time does not diverge from the session clock"
+    },
+    {
+      "id": "AWP-CLK-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/lockstep-clock"
+    },
+    {
+      "id": "AWP-CLK-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "50 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-CLK-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-CLK-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "19 check(s): lockstep/audit-log, lockstep/connection-without-session, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
+    },
+    {
+      "id": "AWP-CLK-008",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-CLK-009",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-CMD-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-008",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CNF-001",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-CNF-002",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-CNF-003",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-CNF-004",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-CNF-005",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-CNF-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile robotics not claimed"
+    },
+    {
+      "id": "AWP-CTL-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "50 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-CTL-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/unknown-methods"
+    },
+    {
+      "id": "AWP-CTL-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "42 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-CTL-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/connection-loss, lockstep/heartbeat"
+    },
+    {
+      "id": "AWP-CTL-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-CTL-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "50 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-CTL-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/one-session-per-connection"
+    },
+    {
+      "id": "AWP-CTL-008",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-CTL-009",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "52 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-CTL-010",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-DAT-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "23 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/estop, lockstep/half-open-replaced, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-DAT-002",
+      "level": "MUST",
+      "outcome": "manual",
+      "detail": "manual: needs control of transport backpressure; attach the sender's drop policy and a stalled-receiver test"
+    },
+    {
+      "id": "AWP-DAT-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/advance-ordering"
+    },
+    {
+      "id": "AWP-DAT-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-DAT-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-DAT-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "only the inline binding is offered"
+    },
+    {
+      "id": "AWP-DAT-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-DAT-008",
+      "level": "MUST",
+      "outcome": "manual",
+      "detail": "manual: run the implementation's decoder over schemas/test-vectors/frames.json and attach the result"
+    },
+    {
+      "id": "AWP-DAT-009",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/connection-loss, lockstep/half-open-replaced, lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-EMB-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/open-refusals"
+    },
+    {
+      "id": "AWP-EMB-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/close-during-motion, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-EMB-003",
+      "level": "MAY",
+      "outcome": "n/a",
+      "detail": "session.transfer is not offered"
+    },
+    {
+      "id": "AWP-EMB-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/observer-session"
+    },
+    {
+      "id": "AWP-EMB-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "no multi_bind_group declared"
+    },
+    {
+      "id": "AWP-ENV-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/envelope"
+    },
+    {
+      "id": "AWP-ENV-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/envelope"
+    },
+    {
+      "id": "AWP-ENV-003",
+      "level": "MUST",
+      "outcome": "manual",
+      "detail": "manual: requires physical disturbance and sensor evidence"
+    },
+    {
+      "id": "AWP-ENV-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/rate-limit"
+    },
+    {
+      "id": "AWP-ENV-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/envelope"
+    },
+    {
+      "id": "AWP-ERR-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-EVT-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "4 check(s): lockstep/determinism, lockstep/estop, lockstep/reset"
+    },
+    {
+      "id": "AWP-EVT-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "6 check(s): lockstep/estop"
+    },
+    {
+      "id": "AWP-EVT-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "38 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-GUI-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile gui not claimed"
+    },
+    {
+      "id": "AWP-GUI-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile gui not claimed"
+    },
+    {
+      "id": "AWP-GUI-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile gui not claimed"
+    },
+    {
+      "id": "AWP-GUI-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile gui not claimed"
+    },
+    {
+      "id": "AWP-GUI-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile gui not claimed"
+    },
+    {
+      "id": "AWP-LIF-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "22 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/determinism, lockstep/estop, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-LIF-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "20 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/determinism, lockstep/estop, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-LIF-003",
+      "level": "SHOULD",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/lifecycle-complete"
+    },
+    {
+      "id": "AWP-LIF-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "17 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/determinism, lockstep/estop, lockstep/isolation, lockstep/lockstep-clock, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging"
+    },
+    {
+      "id": "AWP-LIF-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "20 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/determinism, lockstep/estop, lockstep/isolation, lockstep/lockstep-clock, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/reset, lockstep/resume-replay, lockstep/staging"
+    },
+    {
+      "id": "AWP-LIF-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-LIF-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "no streaming-duration action type"
+    },
+    {
+      "id": "AWP-LIF-008",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/estop"
+    },
+    {
+      "id": "AWP-LIF-009",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-LIF-010",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/admission-refusals"
+    },
+    {
+      "id": "AWP-MA-001",
+      "level": "MAY",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-MA-002",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "no scene channel"
+    },
+    {
+      "id": "AWP-MA-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/open-refusals"
+    },
+    {
+      "id": "AWP-MA-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/isolation"
+    },
+    {
+      "id": "AWP-MA-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/reset"
+    },
+    {
+      "id": "AWP-MAN-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "51 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-MAN-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-MAN-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/isolation, lockstep/manifest"
+    },
+    {
+      "id": "AWP-MAN-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-MAN-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "command_channels not advertised"
+    },
+    {
+      "id": "AWP-MAN-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-MAN-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "no multi_bind_group declared"
+    },
+    {
+      "id": "AWP-MOD-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-MOD-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-MOD-003",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-NEG-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-NEG-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/open-refusals"
+    },
+    {
+      "id": "AWP-NEG-003",
+      "level": "MAY",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/grants, lockstep/session-open"
+    },
+    {
+      "id": "AWP-NEG-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "6 check(s): lockstep/isolation, lockstep/subscriptions"
+    },
+    {
+      "id": "AWP-OBS-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-OBS-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-OBS-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "23 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/estop, lockstep/half-open-replaced, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-OBS-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-OBS-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-OBS-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-OBS-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-PRE-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/queue"
+    },
+    {
+      "id": "AWP-PRE-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "5 check(s): lockstep/cancel-pending, lockstep/queue"
+    },
+    {
+      "id": "AWP-PRE-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/replace"
+    },
+    {
+      "id": "AWP-PRE-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "no type declares blend"
+    },
+    {
+      "id": "AWP-PRE-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/reject-when-busy"
+    },
+    {
+      "id": "AWP-PRE-006",
+      "level": "MAY",
+      "outcome": "n/a",
+      "detail": "arm_01's action types share one concurrency group"
+    },
+    {
+      "id": "AWP-PRE-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/replace"
+    },
+    {
+      "id": "AWP-PRM-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/grants, lockstep/observer-session"
+    },
+    {
+      "id": "AWP-PRM-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-PRM-003",
+      "level": "MAY",
+      "outcome": "n/a",
+      "detail": "no grant expiry offered"
+    },
+    {
+      "id": "AWP-PRM-004",
+      "level": "MAY",
+      "outcome": "n/a",
+      "detail": "no per-type grant scopes in the granted schema"
+    },
+    {
+      "id": "AWP-PRM-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/reset"
+    },
+    {
+      "id": "AWP-PRM-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "10 check(s): lockstep/determinism, lockstep/reset"
+    },
+    {
+      "id": "AWP-REP-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability seed not advertised"
+    },
+    {
+      "id": "AWP-REP-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability snapshot not advertised"
+    },
+    {
+      "id": "AWP-REP-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability replay not advertised"
+    },
+    {
+      "id": "AWP-ROB-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-ROB-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-ROB-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-ROB-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-ROB-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-ROB-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-ROB-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "17 check(s): lockstep/audit-log, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
+    },
+    {
+      "id": "AWP-SAF-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/connection-loss"
+    },
+    {
+      "id": "AWP-SAF-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-005",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-SAF-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-008",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-009",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-010",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "agent-side requirement"
+    },
+    {
+      "id": "AWP-SAF-011",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-012",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SAF-013",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-SCN-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "scene channel offered: no"
+    },
+    {
+      "id": "AWP-SCN-002",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "scene channel offered: no"
+    },
+    {
+      "id": "AWP-SCN-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "scene channel offered: no"
+    },
+    {
+      "id": "AWP-SEC-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/websocket-binding"
+    },
+    {
+      "id": "AWP-SEC-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "loopback endpoint"
+    },
+    {
+      "id": "AWP-SEC-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-SEC-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "stream endpoints offered: no"
+    },
+    {
+      "id": "AWP-SEC-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "loopback endpoint"
+    },
+    {
+      "id": "AWP-SEC-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/websocket-binding"
+    },
+    {
+      "id": "AWP-SES-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-SES-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-SES-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/connection-loss, lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-SES-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "4 check(s): lockstep/connection-loss, lockstep/half-open-replaced, lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-SES-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-SES-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-SES-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "44 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-SES-008",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/resume-unknown"
+    },
+    {
+      "id": "AWP-SES-009",
+      "level": "MAY",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-SES-010",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/half-open-replaced"
+    },
+    {
+      "id": "AWP-SES-011",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-SES-012",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/connection-without-session"
+    },
+    {
+      "id": "AWP-SIM-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "profile sim not claimed"
+    },
+    {
+      "id": "AWP-TIM-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-TIM-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/manifest, lockstep/staging"
+    },
+    {
+      "id": "AWP-TIM-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/advance-ordering"
+    },
+    {
+      "id": "AWP-TIM-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/determinism"
+    },
+    {
+      "id": "AWP-TIM-005",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-TIM-006",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-TIM-007",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-TIM-008",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "one time model offered"
+    },
+    {
+      "id": "AWP-TIM-009",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-TIM-010",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "4 check(s): lockstep/lifecycle-complete, lockstep/staging"
+    },
+    {
+      "id": "AWP-TIM-011",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "24 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/determinism, lockstep/estop, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging, lockstep/tick-mismatch, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-TIM-012",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/observer-session"
+    },
+    {
+      "id": "AWP-TIM-013",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/lockstep-clock"
+    },
+    {
+      "id": "AWP-TRN-001",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/websocket-binding"
+    },
+    {
+      "id": "AWP-TRN-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "42 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-TRN-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "only the inline binding is offered"
+    },
+    {
+      "id": "AWP-TRN-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-TRN-005",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "42 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-TRN-006",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-TRN-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "23 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/estop, lockstep/half-open-replaced, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/staging, lockstep/window-expiry"
+    },
+    {
+      "id": "AWP-TRN-008",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "4 check(s): lockstep/connection-loss, lockstep/half-open-replaced, lockstep/resume-replay"
+    },
+    {
+      "id": "AWP-TRN-009",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-TRN-010",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-TRN-011",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "only the inline binding is offered"
+    },
+    {
+      "id": "AWP-TRN-012",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "stream endpoints offered: no"
+    },
+    {
+      "id": "AWP-TRN-013",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "stream endpoints offered: no"
+    },
+    {
+      "id": "AWP-TSK-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability task not advertised"
+    },
+    {
+      "id": "AWP-TSK-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability task not advertised"
+    },
+    {
+      "id": "AWP-TSK-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability task not advertised"
+    },
+    {
+      "id": "AWP-TSK-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "capability task not advertised"
+    },
+    {
+      "id": "AWP-TSK-005",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "capability task not advertised"
+    },
+    {
+      "id": "AWP-UNI-001",
+      "level": "MUST",
+      "outcome": "manual",
+      "detail": "manual: review of field names and units in the manifest and payload schemas"
+    },
+    {
+      "id": "AWP-UNI-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-UNI-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "3 check(s): lockstep/session-open"
+    },
+    {
+      "id": "AWP-UNI-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "no dynamic frames"
+    },
+    {
+      "id": "AWP-VER-001",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-VER-002",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/version-negotiation"
+    },
+    {
+      "id": "AWP-VER-003",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/version-negotiation"
+    },
+    {
+      "id": "AWP-VER-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "49 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-VER-005",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-VER-006",
+      "level": "MUST",
+      "outcome": "untestable",
+      "detail": "untestable: process or deployment policy"
+    },
+    {
+      "id": "AWP-VER-007",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "2 check(s): lockstep/unknown-methods"
+    },
+    {
+      "id": "AWP-VER-008",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/manifest"
+    },
+    {
+      "id": "AWP-VER-009",
+      "level": "MUST",
+      "outcome": "manual",
+      "detail": "manual: the implementation's documentation and the conformance report name the draft revision"
+    }
+  ],
+  "world": {
+    "name": "awp-sim",
+    "version": "0.1.0a1",
+    "vendor": "hyperduality"
+  },
+  "tests": [
+    {
+      "test": "lockstep/lifecycle-complete",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/idempotency",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/admission-refusals",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/cancel-executing",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/cancel-pending",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/queue",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/replace",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/reject-when-busy",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/deadlines-advisory",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/transfer-offered",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/close-during-motion",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/rate-limit",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/envelope",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/manifest",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/version-negotiation",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/unknown-methods",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/websocket-binding",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/session-open",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/one-session-per-connection",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/open-refusals",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/observer-session",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/grants",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/subscriptions",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/modalities",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/heartbeat",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/integer-range",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/connection-without-session",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/estop",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/audit-log",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/task",
+      "outcome": "skipped: capability task not advertised"
+    },
+    {
+      "test": "lockstep/approval",
+      "outcome": "skipped: no action type requires approval"
+    },
+    {
+      "test": "lockstep/blend",
+      "outcome": "skipped: the moves do not declare blend"
+    },
+    {
+      "test": "lockstep/transfer",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/seeding",
+      "outcome": "skipped: capability seed not advertised"
+    },
+    {
+      "test": "lockstep/snapshot-restore",
+      "outcome": "skipped: capability snapshot not advertised"
+    },
+    {
+      "test": "lockstep/staging",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/advance-ordering",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/tick-mismatch",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/lockstep-clock",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/determinism",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/reset",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/isolation",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/resume-replay",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/half-open-replaced",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/resume-unknown",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/window-expiry",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/connection-loss",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/max-obs-rate-lockstep",
+      "outcome": "ran"
+    },
+    {
+      "test": "lockstep/ws-stream",
+      "outcome": "ran"
+    }
+  ]
+}

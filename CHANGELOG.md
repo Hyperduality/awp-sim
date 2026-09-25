@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `conformance/`: the lockstep report and the evidence for its manual rows, with tests for them in `tests/test_evidence.py`.
+
 ## 0.1.0a1
 
 First release, targeting specification revision `0.1-draft.7`.
