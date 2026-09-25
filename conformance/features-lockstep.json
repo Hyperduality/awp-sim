@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a3"
+    "version": "0.1.0a4"
   },
   "specification": "0.1-draft.9",
   "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-25T21:53:28Z",
+  "generated": "2026-09-25T23:40:53Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a3)",
+    "wording": "Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a4)",
     "classes": [
       "Core World",
       "sim"
@@ -296,7 +296,7 @@
       "id": "AWP-CLK-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "24 check(s): lockstep/approval, lockstep/audit-log, lockstep/blend, lockstep/connection-without-session, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions"
+      "detail": "28 check(s): lockstep/approval, lockstep/audit-log, lockstep/blend, lockstep/connection-without-session, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions, lockstep/transfer, lockstep/window-expiry"
     },
     {
       "id": "AWP-CLK-008",
@@ -986,7 +986,7 @@
       "id": "AWP-SAF-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "22 check(s): lockstep/approval, lockstep/audit-log, lockstep/blend, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions"
+      "detail": "26 check(s): lockstep/approval, lockstep/audit-log, lockstep/blend, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions, lockstep/transfer, lockstep/window-expiry"
     },
     {
       "id": "AWP-SAF-002",
