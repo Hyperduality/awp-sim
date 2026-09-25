@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a1"
+    "version": "0.1.0a2"
   },
-  "specification": "0.1-draft.7",
-  "target": "ws://127.0.0.1:8720",
+  "specification": "0.1-draft.8",
+  "target": "ws://127.0.0.1:8741",
   "side": "world",
-  "generated": "2026-09-25T15:04:19Z",
+  "generated": "2026-09-25T15:34:32Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.7 (awp-conformance 0.1.0a1)",
+    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.8 (awp-conformance 0.1.0a2)",
     "classes": [
       "Core World"
     ],
@@ -19,15 +19,14 @@
     "failed": [],
     "untested": [],
     "manual_evidence_required": [
-      "AWP-DAT-002",
       "AWP-DAT-008",
       "AWP-ENV-003",
       "AWP-UNI-001",
       "AWP-VER-009"
     ],
     "counts": {
-      "manual": 5,
-      "n/a": 98,
+      "manual": 4,
+      "n/a": 99,
       "pass": 123,
       "untestable": 10
     }
@@ -462,8 +461,8 @@
     {
       "id": "AWP-DAT-002",
       "level": "MUST",
-      "outcome": "manual",
-      "detail": "manual: needs control of transport backpressure; attach the sender's drop policy and a stalled-receiver test"
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
     },
     {
       "id": "AWP-DAT-003",
@@ -1452,7 +1451,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a1",
+    "version": "0.1.0a2",
     "vendor": "hyperduality"
   },
   "tests": [

@@ -1,8 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.1.0a2
 
-- `conformance/`: the lockstep report and the evidence for its manual rows, with tests for them in `tests/test_evidence.py`.
+Targets specification revision `0.1-draft.8`.
+
+- `awp_sim`: the world checks the arm against its envelope after every step; leaving it emits `envelope_violation` and fails the executing action with reason `envelope` (AWP-ENV-003). `World.disturb` and `Server.disturb` inject an external disturbance.
+- `awp_sim`: a stop during servo motion ends at the envelope's boundary instead of past it.
+- `conformance/`: reports for Core World in both time models and the evidence for their manual rows, with tests in `tests/test_evidence.py`.
 
 ## 0.1.0a1
 
