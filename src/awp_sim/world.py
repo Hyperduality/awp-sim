@@ -18,6 +18,9 @@ from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
+
 from awp import jsonrpc, schema
 from awp.errors import AwpError, ErrorCode
 from awp.frames import Frame, decode, encode, from_inline, to_inline
@@ -26,7 +29,7 @@ from awp.lifecycle import ActionState, same_submission
 
 from .arm import Arm, Phase
 from .config import EMBODIMENT, FRAME_TREE, HOME, PARK, SERVO_CHANNEL, WorldConfig
-from .session import Action, ChannelGrant, Session, Telemetry
+from .session import Action, ChannelGrant, Session, Standing, Telemetry
 
 MS = 1_000_000
 S = 1_000_000_000
@@ -67,6 +70,7 @@ class Send:
 class Close:
     conn: Hashable
     reason: str
+    code: int = 1008  # 1002 for a protocol error (AWP-CTL-009, AWP-TRN-013)
 
 
 @dataclass(frozen=True, slots=True)
@@ -197,10 +201,10 @@ class World:
         except AwpError as err:
             c.last_rx_ns = now
             self._send(c, jsonrpc.error(None, err))
-            if err.code == ErrorCode.INTEGER_RANGE:  # AWP-CTL-009 closes the session
+            if err.code == ErrorCode.INTEGER_RANGE:  # AWP-CTL-009 ends the session
                 if c.session is not None:
-                    self._close_session(c.session, now, "session_closed")
-                self._out.append(Close(conn, "AWP_INTEGER_RANGE"))
+                    self._close_session(c.session, now, "protocol_error")
+                self._out.append(Close(conn, "AWP_INTEGER_RANGE", 1002))
             return self._flush()
         return self.receive(conn, msg, now)
 
@@ -253,12 +257,14 @@ class World:
     def receive_stream(self, conn: Hashable, data: bytes, now: int) -> list[Output]:
         """Agent→world frames. Without command channels every frame is discarded (AWP-CMD-003)."""
         self._now = now
+        s = self.sessions.get(self._streams.get(conn, ""))
         try:
             frame = decode(data)
-        except AwpError as err:
-            self._out.append(Close(conn, err.message))
+        except AwpError as err:  # dropped, and the stream connection closed (AWP-DAT-010)
+            if err.code == ErrorCode.INTEGER_RANGE and s is not None:
+                self._close_session(s, now, "protocol_error")  # AWP-CTL-009
+            self._out.append(Close(conn, ErrorCode(err.code).wire_name, 1002))
             return self._flush()
-        s = self.sessions.get(self._streams.get(conn, ""))
         if s is not None:
             if self._audit is not None:
                 self._audit.record(
@@ -646,7 +652,8 @@ class World:
         for name in [n for n in s.grants if n not in readable]:
             del s.grants[name]  # the new connection does not consume it (AWP-AGM-001)
         for g in s.grants.values():
-            g.resync = g.loss_class == "reliable"  # AWP-TRN-008
+            # AWP-TRN-008; in lockstep every per-tick channel restarts from the tick (AWP-TIM-009)
+            g.resync = g.loss_class == "reliable" or (self.lockstep and g.rate_hz is None)
         ready: dict[str, Any] = {
             "session_id": s.id,
             "session_token": s.token,
@@ -739,12 +746,12 @@ class World:
                     self._finish(other, a, ActionState.CANCELLED, now, reason="world_reset")
 
     def _after_reset(self, c: _Conn, rid: Any, now: int) -> None:
-        """AWP-PRM-006 (4): the result, then in lockstep a fresh frame carrying the new tick."""
-        self._reply(c, rid, {"tick": self.tick} if self.lockstep else {})
+        """AWP-PRM-006 (4): in lockstep a fresh frame carrying the new tick, then the result."""
         if self.lockstep:
             for other in self.sessions.values():
                 for g in other.grants.values():
                     self._emit_frame(other, g, now)
+        self._reply(c, rid, {"tick": self.tick} if self.lockstep else {})
 
     # ================================================================ snapshots (sim)
 
@@ -833,7 +840,16 @@ class World:
         a.blends = preempt == "blend"
         if a.replaces:
             self._supersede_pending(s, a.group, now)
-        if decl.get("requires_approval"):
+        standing = next(
+            (
+                g
+                for g in s.standing
+                if decl.get("requires_approval")
+                and g.admits(a.type, p["params"], self._clock(s, now))
+            ),
+            None,
+        )
+        if decl.get("requires_approval") and standing is None:
             state = ActionState.PENDING_APPROVAL  # admitted now, decided later (AWP-APR-001)
         elif preempt == "queue" and busy:
             state = ActionState.QUEUED
@@ -845,17 +861,16 @@ class World:
         s.telemetry.admission.append(admission)
         if "basis_ts_mono_ns" in p:
             s.telemetry.observation_to_action.append(max(0, received - p["basis_ts_mono_ns"]))
-        self._reply(
-            c,
-            rid,
-            {
-                "action_id": a.action_id,
-                "state": str(state),
-                "status_seq": result["status_seq"],
-                "received_ts_mono_ns": received,
-                "ts_mono_ns": result["ts_mono_ns"],
-            },
-        )
+        reply = {
+            "action_id": a.action_id,
+            "state": str(state),
+            "status_seq": result["status_seq"],
+            "received_ts_mono_ns": received,
+            "ts_mono_ns": result["ts_mono_ns"],
+        }
+        if standing is not None:
+            reply["approval_id"] = standing.approval_id  # admitted under a grant (AWP-APR-004)
+        self._reply(c, rid, reply)
         self._activate(s, now)
         if state is ActionState.PENDING_APPROVAL:
             self._request_approval(s, a, now)
@@ -1109,6 +1124,7 @@ class World:
         session_id, action_id, _ = entry
         s = self.sessions[session_id]
         a = s.actions[action_id]
+        grant = self._standing(s, a, p) if "standing" in p else None
         if self._audit is not None:
             self._audit.record(
                 s.id,
@@ -1122,6 +1138,8 @@ class World:
             return
         del self._approvals[p["approval_id"]]
         a.approval_id = None
+        if grant is not None:
+            s.standing.append(grant)
         reason = self._still_valid(s, a, now)
         if reason is not None:
             self._transition(s, a, ActionState.REJECTED, now, reason=reason)
@@ -1134,6 +1152,29 @@ class World:
                 s.staged.append(a)
             else:
                 self._execute(s, a, now)
+
+    def _standing(self, s: Session, a: Action, p: dict[str, Any]) -> Standing:
+        """A standing approval from a response, refused before anything changes (AWP-APR-004)."""
+        standing = p["standing"]
+        scope = standing["scope"]
+        if p["decision"] != "approve":
+            raise AwpError(ErrorCode.PARAMS_INVALID, "a standing approval must approve")
+        if scope["type"] != a.type:
+            raise AwpError(ErrorCode.PARAMS_INVALID, f"scope.type is not {a.type}")
+        predicate = scope.get("predicate")
+        if predicate is not None:
+            try:
+                Draft202012Validator.check_schema(predicate)
+            except SchemaError as exc:
+                raise AwpError(
+                    ErrorCode.PARAMS_INVALID, f"predicate is not a JSON Schema: {exc.message}"
+                ) from exc
+        return Standing(
+            p["approval_id"],
+            scope["type"],
+            None if predicate is None else Draft202012Validator(predicate),
+            standing["expires_at_ns"],
+        )
 
     def _check_approvals(self, now: int) -> None:
         """AWP-APR-003: no decision by expires_at_ns (the session clock) is a rejection."""

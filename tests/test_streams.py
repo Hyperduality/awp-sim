@@ -127,6 +127,23 @@ async def test_async_client_uses_the_stream_connection(server):
         await client.close_session()
 
 
+async def test_setpoints_are_not_sent_inline_while_their_stream_is_down():
+    config = WorldConfig(features=frozenset({"servo"}), heartbeat_interval_ms=300)
+    async with Server(World(config), port=0, stream_binding=True) as server:
+        conn = ClientConnection(AGENT, ["proprio/json", "text/event+json"])
+        async with AsyncClient(conn, server.url) as client:
+            await client.initialize()
+            await client.open_session("streaming", embodiment="arm_01", subscribe=["proprio"])
+            await client.submit("servo", {})
+            await client.wait_for(lambda e: client._stream_ws is not None, 3.0)
+            await client.command("servo_arm", {"v_mps": [0.01, 0.0, 0.0]})
+            assert client._stream_ws is not None
+            await client._stream_ws.close()
+            await client.wait_for(lambda e: client._stream_ws is None, 3.0)
+            with pytest.raises(ConnectionError):  # AWP-TRN-010
+                await client.command("servo_arm", {"v_mps": [0.01, 0.0, 0.0]})
+
+
 async def test_stream_endpoint_rejects_missing_and_url_credentials(server):
     url = server.url + "/stream"
     with pytest.raises(InvalidStatus) as exc:

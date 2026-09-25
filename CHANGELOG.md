@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0a3
+
+Targets specification revision `0.1-draft.9`.
+
+- `awp_sim`: standing approvals (AWP-APR-004), declared as `safety_policy.standing_approvals` with the approval feature; a submission within a grant is admitted without approval and its result names the grant's `approval_id`.
+- `awp`: `AsyncClient.advance` returns once every subscribed per-tick channel holds a frame of the new tick, which on a stream connection may follow the result (AWP-TIM-003). A `session.resume` answered `AWP_SESSION_UNKNOWN` closes the session and forgets its actions (AWP-SES-008). `respond_approval` takes `standing`.
+- `awp-sim demo` resumes after a lost connection, or opens a new session if the world no longer holds it.
+- `awp_sim`: an integer beyond 2^53-1 closes the session with reason `protocol_error` and the connection with code 1002 (AWP-CTL-009); a malformed frame on a stream connection closes it with code 1002 and `AWP_MALFORMED` (AWP-DAT-010); after a lockstep resumption every per-tick channel restarts with a resync keyframe at the current tick (AWP-TIM-009); after a reset the fresh frames precede the result (AWP-PRM-006).
+- `awp`: an integer beyond 2^53-1 ends the session with `session.close` and close code 1002; a malformed stream frame is dropped and its stream connection closed and re-established; frames with `resync` but not `keyframe` are malformed. While a lost stream connection is down, `AsyncClient.command` raises instead of sending inline (AWP-TRN-010). `ClientConnection.receive_frame` raises for a malformed frame, and `delivery()` reports each channel's frames and gaps.
+
 ## 0.1.0a2
 
 Targets specification revision `0.1-draft.8`.
