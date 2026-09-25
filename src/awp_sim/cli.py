@@ -51,6 +51,12 @@ def _parser() -> argparse.ArgumentParser:
         help="disable the audit log (not conformant; for development only)",
     )
     s.add_argument("--record-dir", type=Path, help="write per-session wire traces here")
+    s.add_argument(
+        "--stream-binding",
+        choices=["inline", "ws"],
+        default="inline",
+        help="offer frames on a ws stream connection as well as inline (AWP-TRN-003)",
+    )
     for name, default in (
         ("watchdog-ms", 2000),
         ("heartbeat-ms", 5000),
@@ -149,6 +155,7 @@ def _serve(args: argparse.Namespace) -> int:
             ssl_context=tls,
             allow_insecure=args.insecure,
             record_dir=args.record_dir,
+            stream_binding=args.stream_binding == "ws",
         )
     except ValueError as err:
         print(f"awp-sim: {err}", file=sys.stderr)

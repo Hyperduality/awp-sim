@@ -26,12 +26,36 @@ from websockets.typing import Subprotocol
 from awp import jsonrpc
 
 from .recorder import TraceRecorder
-from .world import Close, Output, Send, World
+from .world import Close, Output, Send, SendFrame, World
 
 log = logging.getLogger("awp_sim")
 
 SUBPROTOCOL = Subprotocol("awp")
 BEARER_PREFIX = "awp.bearer."
+STREAM_PATH = "/stream"
+
+Item = Send | SendFrame | Close
+
+
+def _channel(item: Item) -> int | None:
+    """The latest-wins channel an item may be replaced on, if any."""
+    if isinstance(item, SendFrame) and item.latest_wins:
+        return item.frame.channel_id
+    if isinstance(item, Send) and item.latest_wins:
+        return int(item.msg["params"]["channel_id"])
+    return None
+
+
+def _bearer(headers: Headers) -> str | None:
+    """The credential from `Authorization` or an `awp.bearer.<token>` subprotocol (AWP-SEC-005)."""
+    auth = headers.get("Authorization") or ""
+    if auth.startswith("Bearer "):
+        return auth.removeprefix("Bearer ")
+    for v in headers.get_all("Sec-WebSocket-Protocol"):
+        for p in v.split(","):
+            if p.strip().startswith(BEARER_PREFIX):
+                return p.strip().removeprefix(BEARER_PREFIX)
+    return None
 
 
 class _Outbox:
@@ -42,14 +66,14 @@ class _Outbox:
     LIMIT = 10_000
 
     def __init__(self) -> None:
-        self._items: deque[list[Send | Close]] = deque()
-        self._slots: dict[int, list[Send | Close]] = {}
+        self._items: deque[list[Item]] = deque()
+        self._slots: dict[int, list[Item]] = {}
         self._ready = asyncio.Event()
 
-    def put(self, item: Send | Close) -> bool:
+    def put(self, item: Item) -> bool:
         """Queue `item`; False if the queue is full."""
-        if isinstance(item, Send) and item.latest_wins:
-            channel = int(item.msg["params"]["channel_id"])
+        channel = _channel(item)
+        if channel is not None:
             cell = self._slots.get(channel)
             if cell is not None:
                 cell[0] = item
@@ -63,14 +87,15 @@ class _Outbox:
         self._ready.set()
         return True
 
-    async def get(self) -> Send | Close:
+    async def get(self) -> Item:
         while not self._items:
             self._ready.clear()
             await self._ready.wait()
         cell = self._items.popleft()
         item = cell[0]
-        if isinstance(item, Send) and item.latest_wins:
-            self._slots.pop(int(item.msg["params"]["channel_id"]), None)
+        channel = _channel(item)
+        if channel is not None:
+            self._slots.pop(channel, None)
         return item
 
 
@@ -95,6 +120,7 @@ class Server:
         allow_insecure: bool = False,
         record_dir: Path | str | None = None,
         step_ms: float = 2.0,
+        stream_binding: bool = False,
     ) -> None:
         if not _is_loopback(host) and not allow_insecure:
             if token is None:
@@ -108,6 +134,7 @@ class Server:
         self.ssl_context = ssl_context
         self.step_s = step_ms / 1000
         self.recorder = TraceRecorder(record_dir) if record_dir else None
+        self.stream_binding = stream_binding
         self._ids = itertools.count(1)
         self._sockets: dict[Hashable, tuple[ServerConnection, _Outbox]] = {}
         self._server: WsServer | None = None
@@ -132,6 +159,8 @@ class Server:
             max_size=16 * 1024 * 1024,
         )
         self.port = self._server.sockets[0].getsockname()[1]
+        if self.stream_binding:
+            self.world.stream_url = self.url + STREAM_PATH
         self._loop = asyncio.create_task(self._run())
         log.info("awp-sim %s world listening on %s", self.world.config.mode, self.url)
 
@@ -166,6 +195,10 @@ class Server:
             return connection.respond(
                 HTTPStatus.BAD_REQUEST, "credentials must not appear in URLs\n"
             )
+        if urlsplit(request.path).path == STREAM_PATH:  # the session token is the credential
+            if _bearer(request.headers) is None:
+                return connection.respond(HTTPStatus.UNAUTHORIZED, "missing session token\n")
+            return None
         if self.token is None or self._credential_ok(request.headers):
             return None
         return connection.respond(HTTPStatus.UNAUTHORIZED, "missing or invalid bearer token\n")
@@ -187,6 +220,9 @@ class Server:
     # ------------------------------------------------------------ connections
 
     async def _handle(self, ws: ServerConnection) -> None:
+        if ws.request is not None and urlsplit(ws.request.path).path == STREAM_PATH:
+            await self._handle_stream(ws)
+            return
         conn = next(self._ids)
         outbox = _Outbox()
         self._sockets[conn] = (ws, outbox)
@@ -210,6 +246,27 @@ class Server:
             if self.recorder is not None:
                 self.recorder.forget(conn)
 
+    async def _handle_stream(self, ws: ServerConnection) -> None:
+        """A stream connection: binary frames only, one per message (AWP-TRN-003)."""
+        conn = next(self._ids)
+        outbox = _Outbox()
+        self._sockets[conn] = (ws, outbox)
+        writer = asyncio.create_task(self._write(conn, ws, outbox))
+        token = _bearer(ws.request.headers) if ws.request is not None else None
+        self._dispatch(self.world.attach_stream(conn, token or "", time.monotonic_ns()))
+        try:
+            async for raw in ws:
+                if isinstance(raw, str):
+                    await ws.close(code=1008, reason="AWP_MALFORMED: text on a stream connection")
+                    break
+                self._dispatch(self.world.receive_stream(conn, raw, time.monotonic_ns()))
+        except ConnectionClosed:
+            pass
+        finally:
+            writer.cancel()
+            self._sockets.pop(conn, None)
+            self._dispatch(self.world.stream_lost(conn, time.monotonic_ns()))
+
     async def _write(self, conn: Hashable, ws: ServerConnection, outbox: _Outbox) -> None:
         with contextlib.suppress(ConnectionClosed, asyncio.CancelledError):
             while True:
@@ -217,6 +274,9 @@ class Server:
                 if isinstance(send, Close):  # everything queued before it has been sent
                     await ws.close(code=1008, reason=send.reason[:120])
                     return
+                if isinstance(send, SendFrame):
+                    await ws.send(self.world.frame_bytes(send, time.monotonic_ns()))
+                    continue
                 msg = send.msg
                 if msg.get("method") == "obs.frame":
                     msg = self.world.frame_sent(send, time.monotonic_ns())

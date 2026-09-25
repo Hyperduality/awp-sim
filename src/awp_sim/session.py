@@ -108,6 +108,9 @@ class Session:
     last_agent_ns: int = 0
     last_admitted_ns: int | None = None
     suspended_ns: int | None = None
+    stream_conn: Hashable | None = None
+    stream_lost_ns: int | None = None
+    stream_degraded_reported: bool = False
     safe_state: bool = False
     degraded_reported: bool = False
     closing: list[tuple[Hashable, Any]] = field(default_factory=list)  # close requests to answer

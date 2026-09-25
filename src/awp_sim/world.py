@@ -11,13 +11,13 @@ import logging
 import secrets
 from collections import OrderedDict
 from collections.abc import Callable, Hashable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
 from awp import jsonrpc, schema
 from awp.errors import AwpError, ErrorCode
-from awp.frames import Frame, to_inline
+from awp.frames import Frame, decode, encode, to_inline
 from awp.jsonrpc import Message
 from awp.lifecycle import ActionState, same_submission
 
@@ -66,7 +66,17 @@ class Close:
     reason: str
 
 
-Output = Send | Close
+@dataclass(frozen=True, slots=True)
+class SendFrame:
+    """A binary frame for a stream connection (AWP-TRN-003)."""
+
+    conn: Hashable
+    frame: Frame
+    session: str
+    latest_wins: bool = False
+
+
+Output = Send | SendFrame | Close
 
 
 class AuditSink(Protocol):
@@ -117,6 +127,8 @@ class World:
         self._out: list[Output] = []
         self._started_ns: int | None = None
         self._now = 0
+        self._streams: dict[Hashable, str] = {}  # stream connection → session id
+        self.stream_url: str | None = None  # set by the server when it offers the ws binding
 
     @property
     def _handlers(self) -> dict[str, Callable[[_Conn, Any, dict[str, Any], int], None]]:
@@ -188,6 +200,54 @@ class World:
             self._suspend(c.session, now, "connection_lost")
         return self._flush()
 
+    def attach_stream(self, conn: Hashable, token: str, now: int) -> list[Output]:
+        """A stream connection presenting `token` (AWP-SEC-004). Its channels move to it."""
+        self._now = now
+        s = self._tokens.get(token)
+        if s is None or s.conn is None or s.closing_reason is not None or self.stream_url is None:
+            self._out.append(Close(conn, "no active session for this token"))
+            return self._flush()
+        if s.stream_conn is not None:
+            self._out.append(Close(s.stream_conn, "replaced by a new stream connection"))
+            self._streams.pop(s.stream_conn, None)
+        self._streams[conn] = s.id
+        s.stream_conn = conn
+        s.stream_lost_ns = None
+        s.stream_degraded_reported = False
+        for g in s.grants.values():
+            g.resync = True  # the first frame on the new connection is a resync keyframe
+            self._emit_frame(s, g, now)
+        return self._flush()
+
+    def receive_stream(self, conn: Hashable, data: bytes, now: int) -> list[Output]:
+        """Agent→world frames. Without command channels every frame is discarded (AWP-CMD-003)."""
+        self._now = now
+        try:
+            decode(data)
+        except AwpError as err:
+            self._out.append(Close(conn, err.message))
+        return self._flush()
+
+    def stream_lost(self, conn: Hashable, now: int) -> list[Output]:
+        self._now = now
+        s = self.sessions.get(self._streams.pop(conn, ""))
+        if s is not None and s.stream_conn == conn:
+            s.stream_conn = None
+            s.stream_lost_ns = now  # its channels wait for a new stream connection (AWP-TRN-010)
+        return self._flush()
+
+    def frame_bytes(self, send: SendFrame, now: int) -> bytes:
+        """Encode a frame as it is handed to the transport, stamping `ts_send_ns` (AWP-OBS-006)."""
+        s = self.sessions.get(send.session)
+        frame = send.frame
+        if s is not None and not self.lockstep:
+            ts_send = max(self._clock(s, now), frame.ts_mono_ns)
+            frame = replace(frame, ts_send_ns=ts_send)
+            latency = ts_send - frame.ts_mono_ns
+            s.telemetry.observation.append(latency)
+            s.telemetry.channels.setdefault(frame.channel_id, []).append(latency)
+        return encode(frame)
+
     def advance(self, now: int) -> list[Output]:
         """Run timers and, in streaming, the simulation. Call often (every few milliseconds)."""
         self._now = now
@@ -202,6 +262,7 @@ class World:
                 self._check_deadlines(s, now)
                 self._check_watchdog(s, now)
             self._check_retention(s, now)
+            self._check_stream(s, now)
             if s.id in self.sessions and s.conn is not None and not self.lockstep:
                 self._stream_frames(s, now)
                 self._send_telemetry(s, now)
@@ -249,6 +310,13 @@ class World:
         return c.session if c else None
 
     # ================================================================ plumbing
+
+    def _endpoints(self) -> list[dict[str, Any]]:
+        """Stream endpoints by preference; inline is last and always offered (AWP-TRN-004)."""
+        endpoints: list[dict[str, Any]] = []
+        if self.stream_url is not None:
+            endpoints.append({"binding": "ws", "url": self.stream_url, "max_frame_bytes": 1 << 20})
+        return [*endpoints, {"binding": "inline"}]
 
     def _flush(self) -> list[Output]:
         out, self._out = self._out, []
@@ -451,7 +519,7 @@ class World:
             "reconnect_window_ms": self.config.reconnect_window_ms,
             "heartbeat_interval_ms": self.config.heartbeat_interval_ms,
             "granted": self._granted(s),
-            "stream_endpoints": [{"binding": "inline"}],
+            "stream_endpoints": self._endpoints(),
             "frame_tree": FRAME_TREE,
             "clock_anchor": s.clock_anchor,
         }
@@ -501,7 +569,7 @@ class World:
             "replay_to_status_seq": replay_to,
             "heartbeat_interval_ms": self.config.heartbeat_interval_ms,
             "granted": self._granted(s),
-            "stream_endpoints": [{"binding": "inline"}],
+            "stream_endpoints": self._endpoints(),
             "frame_tree": FRAME_TREE,
             "clock_anchor": s.clock_anchor,
             "safe_state": s.safe_state,
@@ -1026,8 +1094,8 @@ class World:
         return json.dumps(body, separators=(",", ":")).encode()
 
     def _emit_frame(self, s: Session, g: ChannelGrant, now: int) -> None:
-        if s.conn is None:
-            return
+        if s.conn is None or (s.stream_conn is None and s.stream_lost_ns is not None):
+            return  # no control connection, or the channel waits for its stream (AWP-TRN-010)
         g.seq += 1
         frame = Frame(
             channel_id=g.channel_id,
@@ -1040,9 +1108,13 @@ class World:
         )
         g.resync = False
         streaming_lw = not self.lockstep and g.loss_class == "latest-wins"
-        self._to_session(
-            s, jsonrpc.notification("obs.frame", to_inline(frame)), latest_wins=streaming_lw
-        )
+        inline = jsonrpc.notification("obs.frame", to_inline(frame))
+        if s.stream_conn is not None:
+            self._out.append(SendFrame(s.stream_conn, frame, s.id, streaming_lw))
+            if self._audit is not None:
+                self._audit.record(s.id, frame.ts_mono_ns, "world", inline)
+        else:
+            self._to_session(s, inline, latest_wins=streaming_lw)
         self._activate(s, now)
 
     def _stream_frames(self, s: Session, now: int) -> None:
@@ -1083,7 +1155,26 @@ class World:
             c.next_id += 1
             self._send(c, jsonrpc.request(rid, "ping", {"origin_ns": self._clock(c.session, now)}))
 
+    def _end_stream(self, s: Session, reason: str) -> None:
+        if s.stream_conn is not None:
+            self._out.append(Close(s.stream_conn, reason))
+            self._streams.pop(s.stream_conn, None)
+        s.stream_conn = None
+        s.stream_lost_ns = None  # frames go inline until the agent attaches again (AWP-TRN-008)
+
+    def _check_stream(self, s: Session, now: int) -> None:
+        """A reliable channel whose stream connection is gone is degraded (AWP-SAF-009)."""
+        if s.stream_lost_ns is None or s.stream_degraded_reported:
+            return
+        for g in s.grants.values():
+            stale = self._channels[g.name].get("stale_after_ms")
+            limit = (stale or 2000 / g.rate_hz) * MS if g.rate_hz else None
+            if g.loss_class == "reliable" and limit and now - s.stream_lost_ns > limit:
+                s.stream_degraded_reported = True
+                self._event(s, "channel_degraded", now, {"channel": g.name})
+
     def _suspend(self, s: Session, now: int, reason: str) -> None:
+        self._end_stream(s, "session suspended")
         s.conn = None
         s.suspended_ns = now
         if s.state != "closed":
@@ -1142,6 +1233,7 @@ class World:
 
     def _finalize_close(self, s: Session, now: int) -> None:
         self._session_state(s, "closed", s.closing_reason or "session_closed", now)
+        self._end_stream(s, "session closed")
         for conn, rid in s.closing:
             if conn in self._conns:
                 self._send(self._conns[conn], jsonrpc.result(rid, {}))

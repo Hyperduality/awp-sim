@@ -14,7 +14,7 @@ from typing import Any
 from awp.client import ClientConnection, ErrorResponse, Event, Response
 from awp.jsonrpc import Message
 
-from .world import Close, Output, Send, World
+from .world import Close, Output, Send, SendFrame, World
 
 MS = 1_000_000
 
@@ -74,8 +74,18 @@ class Loopback:
 
     def deliver(self, outputs: Iterable[Output]) -> None:
         for out in outputs:
+            stream = next(
+                (a for a in self.agents if a.stream is not None and a.stream == out.conn), None
+            )
+            if stream is not None:
+                if isinstance(out, SendFrame):
+                    data = self.world.frame_bytes(out, self.now)
+                    stream.events += stream.client.receive_frame(data)
+                elif isinstance(out, Close):
+                    stream.stream = None
+                continue
             agent = next((a for a in self.agents if a.conn == out.conn), None)
-            if agent is None:
+            if agent is None or isinstance(out, SendFrame):
                 continue
             if isinstance(out, Close):
                 agent.transport_closed()
@@ -104,6 +114,7 @@ class LoopbackAgent:
         )
         self.heartbeat_ms = heartbeat_ms
         self.conn: int | None = None
+        self.stream: int | None = None  # a ws stream connection, when attached
         self.events: list[Event] = []
         self.trace: list[TraceLine] = []
         # Fault: the first world message matching this is lost and the connection goes half-open.
@@ -117,6 +128,19 @@ class LoopbackAgent:
             self.drop()
         self.conn = next(self.net._conn_ids)
         self.net.deliver(self.net.world.connect(self.conn, self.net.now))
+
+    def attach_stream(self) -> None:
+        """Open a stream connection with the session token (AWP-TRN-003, AWP-SEC-004)."""
+        assert self.client.session_token is not None
+        self.stream = next(self.net._conn_ids)
+        self.net.deliver(
+            self.net.world.attach_stream(self.stream, self.client.session_token, self.net.now)
+        )
+
+    def drop_stream(self) -> None:
+        if self.stream is not None:
+            stream, self.stream = self.stream, None
+            self.net.deliver(self.net.world.stream_lost(stream, self.net.now))
 
     def drop(self) -> None:
         """The agent's side of the connection dies."""

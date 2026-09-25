@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 from collections.abc import Iterable
@@ -86,7 +87,7 @@ class AuditLog:
             return
         if msg.get("method") in ("obs.frame", "cmd.frame"):
             params = msg["params"]
-            payload = params.get("payload_b64", "").encode()
+            payload = base64.b64decode(params.get("payload_b64", ""))  # the payload, not its text
             body: dict[str, Any] = {k: v for k, v in params.items() if k != "payload_b64"}
             body["method"] = msg["method"]
             body["payload_sha256"] = hashlib.sha256(payload).hexdigest()
