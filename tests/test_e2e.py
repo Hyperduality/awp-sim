@@ -6,15 +6,15 @@ import asyncio
 import json
 
 import pytest
+from awp.aio import AsyncClient
+from awp.client import ClientConnection
+from awp.demo import run_demo
+from awp.errors import AwpError, ErrorCode
 from websockets.asyncio.client import connect
 from websockets.exceptions import InvalidStatus
 from websockets.typing import Subprotocol
 
-from awp.aio import AsyncClient
-from awp.client import ClientConnection
-from awp.errors import AwpError, ErrorCode
 from awp_sim.config import WorldConfig
-from awp_sim.demo import run_demo
 from awp_sim.server import Server
 from awp_sim.world import World
 

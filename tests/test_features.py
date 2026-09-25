@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from awp.client import ApprovalRequested, FrameReceived, Telemetry
 from awp.errors import AwpError, ErrorCode
 

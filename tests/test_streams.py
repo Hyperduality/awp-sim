@@ -5,13 +5,13 @@ from __future__ import annotations
 import asyncio
 
 import pytest
+from awp.aio import AsyncClient
+from awp.client import ClientConnection, FrameReceived, ProtocolViolation
+from awp.frames import Frame
 from websockets.asyncio.client import connect
 from websockets.exceptions import InvalidStatus
 from websockets.typing import Subprotocol
 
-from awp.aio import AsyncClient
-from awp.client import ClientConnection, FrameReceived, ProtocolViolation
-from awp.frames import Frame
 from awp_sim.config import WorldConfig
 from awp_sim.server import Server
 from awp_sim.world import World
@@ -125,23 +125,6 @@ async def test_async_client_uses_the_stream_connection(server):
         record = await client.submit("move_to_pose", pose(0.1, 0.1, 0.45), basis=seen[-1].frame)
         assert (await client.wait_terminal(record.action_id)).state == "completed"
         await client.close_session()
-
-
-async def test_setpoints_are_not_sent_inline_while_their_stream_is_down():
-    config = WorldConfig(features=frozenset({"servo"}), heartbeat_interval_ms=300)
-    async with Server(World(config), port=0, stream_binding=True) as server:
-        conn = ClientConnection(AGENT, ["proprio/json", "text/event+json"])
-        async with AsyncClient(conn, server.url) as client:
-            await client.initialize()
-            await client.open_session("streaming", embodiment="arm_01", subscribe=["proprio"])
-            await client.submit("servo", {})
-            await client.wait_for(lambda e: client._stream_ws is not None, 3.0)
-            await client.command("servo_arm", {"v_mps": [0.01, 0.0, 0.0]})
-            assert client._stream_ws is not None
-            await client._stream_ws.close()
-            await client.wait_for(lambda e: client._stream_ws is None, 3.0)
-            with pytest.raises(ConnectionError):  # AWP-TRN-010
-                await client.command("servo_arm", {"v_mps": [0.01, 0.0, 0.0]})
 
 
 async def test_stream_endpoint_rejects_missing_and_url_credentials(server):

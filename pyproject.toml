@@ -3,9 +3,9 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "awp-python"
-version = "0.1.0a3"
-description = "Agent World Protocol client protocol layer and reference world for Python."
+name = "awp-sim"
+version = "0.1.0a4"
+description = "Agent World Protocol reference world: a simulated arm in lockstep and streaming."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -21,13 +21,14 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
+  "awp-python>=0.1.0a4",
   "jsonschema>=4.23",
   "websockets>=13.0",
 ]
 
 [project.urls]
 Specification = "https://www.agentworldprotocol.com"
-Source = "https://github.com/Hyperduality/awp-python"
+Source = "https://github.com/Hyperduality/awp-sim"
 
 [project.scripts]
 awp-sim = "awp_sim.cli:main"
@@ -38,14 +39,15 @@ dev = [
   "pytest>=8.3",
   "pytest-asyncio>=0.24",
   "pytest-cov>=6.0",
-  "pyyaml>=6.0",
   "ruff>=0.8",
   "types-jsonschema",
-  "types-pyyaml",
 ]
 
+[tool.uv.sources]
+awp-python = { git = "https://github.com/Hyperduality/awp-python", branch = "main" }
+
 [tool.hatch.build.targets.wheel]
-packages = ["src/awp", "src/awp_sim"]
+packages = ["src/awp_sim"]
 
 [tool.hatch.build.targets.sdist]
 exclude = ["/spec", "/.github"]
@@ -74,8 +76,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "-ra --strict-markers"
-markers = ["slow: real-time scenarios"]
 
 [tool.coverage.run]
-source = ["awp", "awp_sim"]
+source = ["awp_sim"]
 branch = true

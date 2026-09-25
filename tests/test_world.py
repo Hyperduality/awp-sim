@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from awp import jsonrpc
 from awp.client import ErrorResponse, FrameReceived, ReplayCompleted, Telemetry
 from awp.errors import AwpError, ErrorCode
+
 from awp_sim.world import Close, Send
 
 from .helpers import assert_wire_valid, events, make_net, pose, states, statuses
@@ -485,6 +485,7 @@ def test_version_negotiation():
 
 def test_manifest_is_valid_for_both_modes():
     from awp import schema
+
     from awp_sim.config import WorldConfig
 
     for mode in ("lockstep", "streaming"):

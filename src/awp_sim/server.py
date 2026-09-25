@@ -17,14 +17,13 @@ from http import HTTPStatus
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from awp import jsonrpc
 from websockets.asyncio.server import Server as WsServer
 from websockets.asyncio.server import ServerConnection, serve
 from websockets.datastructures import Headers
 from websockets.exceptions import ConnectionClosed
 from websockets.http11 import Request, Response
 from websockets.typing import Subprotocol
-
-from awp import jsonrpc
 
 from .recorder import TraceRecorder
 from .world import Close, Output, Send, SendFrame, World

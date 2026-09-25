@@ -5,6 +5,7 @@ from typing import Any
 
 from awp import schema
 from awp.client import ActionUpdated, WorldEvent
+
 from awp_sim.config import WorldConfig
 from awp_sim.loopback import Loopback, LoopbackAgent
 from awp_sim.world import World

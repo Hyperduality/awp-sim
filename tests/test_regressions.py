@@ -6,10 +6,10 @@ import asyncio
 import json
 
 import pytest
-
 from awp.aio import AsyncClient
-from awp.client import ClientConnection, FrameReceived, ProtocolViolation
+from awp.client import ClientConnection, FrameReceived
 from awp.errors import AwpError, ErrorCode
+
 from awp_sim.config import WorldConfig
 from awp_sim.server import Server, _Outbox
 from awp_sim.world import Close, Send, World
@@ -152,39 +152,6 @@ def test_channels_in_undeclared_modalities_are_not_granted():
     assert {f.channel for f in a.of(FrameReceived)} == {"proprio"}
 
 
-def test_pre_session_pings_do_not_feed_the_clock():
-    conn = ClientConnection(AGENT, ["proprio/json"], clock_ns=lambda: 1_000)
-    rid = conn.ping()
-    conn.receive(
-        {
-            "jsonrpc": "2.0",
-            "id": rid,
-            "result": {"origin_ns": 1_000, "receive_ns": 5, "transmit_ns": 5},
-        }
-    )
-    assert conn.clock.samples == 0
-
-
-def test_a_status_gap_is_not_acknowledged():
-    net = make_net()
-    a = streaming_agent(net)
-    base = a.client.last_status_seq
-
-    def state(seq):
-        return {
-            "jsonrpc": "2.0",
-            "method": "session.state",
-            "params": {"state": "active", "status_seq": seq, "ts_mono_ns": 1, "reason": "resumed"},
-        }
-
-    events = a.client.receive(state(base + 2))
-    assert any(isinstance(e, ProtocolViolation) for e in events)
-    assert a.client.last_status_seq == base
-    a.client.receive(state(base + 1))
-    assert a.client.last_status_seq == base + 2
-    assert a.client.receive(state(base + 2)) == []  # redelivery
-
-
 def test_outbox_is_bounded_and_coalesces_latest_wins():
     box = _Outbox()
     frame = {"jsonrpc": "2.0", "method": "obs.frame", "params": {"channel_id": 1}}
@@ -232,6 +199,7 @@ async def test_recorded_traces_redact_session_tokens(tmp_path):
 
 def test_a_latest_wins_replacement_keeps_the_resync_flag():
     from awp.frames import Frame
+
     from awp_sim.world import SendFrame
 
     box = _Outbox()

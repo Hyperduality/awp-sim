@@ -21,7 +21,6 @@ jobs:
         with:
           node-version: 24
       - run: uv sync --python ${{ matrix.python }}
-      - run: uv run python scripts/sync_spec.py --check
       - run: uv run ruff check
       - run: uv run ruff format --check
       - run: uv run mypy
@@ -46,12 +45,53 @@ jobs:
           name: scenario-traces
           path: traces/
 
+  conformance:
+    name: awp-conformance (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: lockstep, mode: lockstep, serve: "", claim: "", fixture: awp-sim.json }
+          - { name: streaming, mode: streaming, serve: "", claim: "", fixture: awp-sim.json }
+          - name: lockstep, every feature, sim profile
+            mode: lockstep
+            serve: --features task,approval,blend,transfer,sim --approver-token awp-sim-approver --approval-timeout-ms 3000
+            claim: --profile sim
+            fixture: awp-sim-features.json
+          - name: streaming, every feature, ws stream
+            mode: streaming
+            serve: --features task,approval,blend,transfer,servo --stream-binding ws --approver-token awp-sim-approver --approval-timeout-ms 3000
+            claim: ""
+            fixture: awp-sim-features.json
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv sync
+      - name: serve awp-sim and run the suite against it
+        run: |
+          mkdir -p run && cd run
+          curl -fsSL https://raw.githubusercontent.com/Hyperduality/awp-conformance/v0.1.0a3/fixtures/${{ matrix.fixture }} \
+            | sed 's#"audit_dir": "awp-audit"#"audit_dir": "'"$PWD"'/awp-audit"#' > fixture.json
+          uv run awp-sim serve --mode ${{ matrix.mode }} --port 8710 ${{ matrix.serve }} \
+            --watchdog-ms 800 --heartbeat-ms 500 --reconnect-window-ms 4000 &
+          export AWP_SIM_PID=$!
+          sleep 2
+          uvx --prerelease allow --from awp-conformance==0.1.0a3 awp-conformance world \
+            ws://127.0.0.1:8710 --fixture fixture.json ${{ matrix.claim }} --out report
+      - name: the claim is AWP-conformant
+        run: |
+          python3 -c "import json, sys; c = json.load(open('run/report/report.json'))['claim']; print(c['wording']); sys.exit(c['status'] != 'conformant')"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: report-${{ strategy.job-index }}
+          path: run/report/
+
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: true
       - uses: astral-sh/setup-uv@v10.2.0
       - run: uv build
       - run: uvx twine check dist/*

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from awp import schema
+
 from awp_sim.cli import main
 
 

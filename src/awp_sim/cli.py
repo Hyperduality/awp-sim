@@ -88,10 +88,6 @@ def _parser() -> argparse.ArgumentParser:
     sc.add_argument("--list", action="store_true", help="list scenarios and exit")
     sc.add_argument("--out", type=Path, help="write traces and report.json here")
 
-    d = sub.add_parser("demo", help="drive a running world with a scripted agent")
-    d.add_argument("--url", default="ws://127.0.0.1:8710")
-    d.add_argument("--token", default=os.environ.get("AWP_SIM_TOKEN"))
-
     r = sub.add_parser("replay", help="replay a replay bundle and compare (AWP-REP-003)")
     r.add_argument("bundle", type=Path)
 
@@ -118,19 +114,6 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         print(f"not reproduced: {outcome.difference}", file=sys.stderr)
         return 1
-    if args.command == "demo":
-        from websockets.exceptions import InvalidHandshake
-
-        from awp.errors import AwpError
-
-        from .demo import run_demo
-
-        try:
-            asyncio.run(run_demo(args.url, token=args.token))
-        except (OSError, InvalidHandshake, AwpError, TimeoutError) as err:
-            print(f"awp-sim demo: {err}", file=sys.stderr)
-            return 1
-        return 0
     return _serve(args)
 
 

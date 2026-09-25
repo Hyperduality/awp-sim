@@ -18,14 +18,13 @@ from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
-from jsonschema import Draft202012Validator
-from jsonschema.exceptions import SchemaError
-
 from awp import jsonrpc, schema
 from awp.errors import AwpError, ErrorCode
 from awp.frames import Frame, decode, encode, from_inline, to_inline
 from awp.jsonrpc import Message
 from awp.lifecycle import ActionState, same_submission
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
 
 from .arm import Arm, Phase
 from .config import EMBODIMENT, FRAME_TREE, HOME, PARK, SERVO_CHANNEL, WorldConfig

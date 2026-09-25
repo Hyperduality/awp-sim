@@ -7,9 +7,8 @@ from collections.abc import Hashable
 from dataclasses import dataclass, field
 from typing import Any
 
-from jsonschema import Draft202012Validator
-
 from awp.lifecycle import ActionState
+from jsonschema import Draft202012Validator
 
 from .arm import Vec3
 

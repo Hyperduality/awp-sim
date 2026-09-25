@@ -4,9 +4,9 @@
     "version": "0.1.0a3"
   },
   "specification": "0.1-draft.9",
-  "target": "ws://127.0.0.1:8723",
+  "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-25T19:38:17Z",
+  "generated": "2026-09-25T21:53:28Z",
   "claim": {
     "status": "conformant",
     "wording": "Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a3)",
@@ -1459,7 +1459,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a3",
+    "version": "0.1.0a4",
     "vendor": "hyperduality"
   },
   "tests": [
