@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0a6
+
+Targets specification revision `0.1-draft.9`.
+
+- Under the barrier, a pending `world.tick` is lost with its connection. The barrier no longer advances on it while its session is suspended.
+- A holder that transfers one of its embodiments loses that embodiment's action types and channel grants with it.
+- A resumed session keeps its command channel grant; resumption dropped it.
+- `awp-sim manifest` reports an unknown or unsupported feature as an error instead of a traceback.
+- A replay bundle from awp-sim 0.1.0a4 or earlier loads again, with the gripper fully open.
+
 ## 0.1.0a5
 
 Targets specification revision `0.1-draft.9`.

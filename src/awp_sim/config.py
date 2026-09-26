@@ -9,7 +9,7 @@ from . import __version__
 
 Mode = Literal["lockstep", "streaming"]
 
-EMBODIMENT = "arm_01"
+ARM = "arm_01"
 GRIPPER = "gripper_01"
 MULTI_BIND_GROUP = "cell"
 HOME: tuple[float, float, float] = (0.0, 0.0, 0.4)
@@ -22,8 +22,8 @@ ARBITRATION = (
 
 # Beyond Core, each off by default: task (AWP-TSK), approval of `park` (AWP-APR), blend preemption
 # (AWP-PRE-004), embodiment transfer (AWP-EMB-003), sim-profile seeding, snapshots, and replay
-# (AWP-REP, lockstep), a servo command channel (AWP-CMD, streaming), and a shared gripper that one
-# session may bind with the arm (AWP-EMB-005, AWP-MA-003), under the barrier in lockstep.
+# (AWP-REP, lockstep), a servo command channel (AWP-CMD, streaming), and a shared gripper, bound
+# alone or with the arm (AWP-EMB-005, AWP-MA-003), under the barrier in lockstep.
 FEATURES = frozenset({"task", "approval", "blend", "transfer", "sim", "servo", "gripper"})
 
 
@@ -72,7 +72,7 @@ class WorldConfig:
     @property
     def envelope(self) -> dict[str, Any]:
         return {
-            "embodiment": EMBODIMENT,
+            "embodiment": ARM,
             "spatial": {"frame": "base", "aabb_m": [list(self.aabb_m[0]), list(self.aabb_m[1])]},
             "max_velocity_mps": self.max_velocity_mps,
             "max_action_rate_hz": self.max_action_rate_hz,
@@ -114,7 +114,7 @@ class WorldConfig:
             "initial_states": ["home"],
             "embodiments": [
                 {
-                    "id": EMBODIMENT,
+                    "id": ARM,
                     "kind": "manipulator",
                     "action_types": action_types,
                     "channels": channels,

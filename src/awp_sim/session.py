@@ -148,7 +148,7 @@ class Session:
     telemetry: Telemetry = field(default_factory=Telemetry)
     next_channel_id: int = 1
     standing: list[Standing] = field(default_factory=list)
-    tick_request: tuple[Hashable, Any, int] | None = None  # (conn, id, advances) at the barrier
+    tick_request: tuple[Any, int] | None = None  # (id, advances left) at the barrier
 
     def next_seq(self) -> int:
         self.seq += 1

@@ -59,7 +59,7 @@ uv run pytest tests/test_evidence.py tests/test_features.py
 awp-sim encodes and decodes frames with awp-python's `awp.frames`. That decoder's evidence is `test_vectors` in awp-python's [`tests/test_frames.py`](https://github.com/Hyperduality/awp-python/blob/main/tests/test_frames.py), which runs it over every vector in `schemas/test-vectors/frames.json` at `spec-v0.1-draft.9`:
 
 - the 10 valid vectors decode to their listed fields;
-- the 7 marked `expect_error` are rejected with their listed error.
+- the 10 marked `expect_error` are rejected with their listed error.
 
 ### AWP-ENV-003: envelope violations during execution
 

@@ -13,7 +13,7 @@ import logging
 import random
 import secrets
 from collections import OrderedDict
-from collections.abc import Callable, Hashable
+from collections.abc import Callable, Hashable, Iterator
 from dataclasses import asdict, dataclass, field, fields, replace
 from datetime import UTC, datetime
 from typing import Any, Protocol
@@ -27,7 +27,7 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 
 from .arm import Arm, Phase
-from .config import EMBODIMENT, FRAME_TREE, GRIPPER, HOME, PARK, SERVO_CHANNEL, WorldConfig
+from .config import ARM, FRAME_TREE, GRIPPER, HOME, PARK, SERVO_CHANNEL, WorldConfig
 from .gripper import Gripper
 from .session import Action, ChannelGrant, Session, Standing, Telemetry
 
@@ -35,6 +35,7 @@ MS = 1_000_000
 S = 1_000_000_000
 _PREAMBLE_LIMIT = 256  # pre-session messages held for the audit log per connection
 _CLOSED_TOKENS_LIMIT = 10_000
+_RUNNING = (ActionState.EXECUTING, ActionState.CANCELLING)  # the states of `Session.running`
 
 log = logging.getLogger("awp_sim")
 
@@ -125,7 +126,10 @@ class World:
         self._wall_clock = wall_clock
 
         self.arm = Arm(position=HOME, accel_mps2=self.config.accel_mps2, bounds=self.config.aabb_m)
-        self.gripper = self._new_gripper()
+        self.gripper = Gripper(
+            speed_mps=self.config.gripper_speed_mps, max_width_m=self.config.gripper_max_width_m
+        )
+        self.gripper.reset()
         self.tick = 0  # the world's tick: reset and restore move it
         self.advances = 0  # every advance ever made: the lockstep session clock (AWP-TIM-013)
         self.rng = random.Random(0)  # simulated sensor noise, seeded (AWP-REP-001)
@@ -144,7 +148,6 @@ class World:
         self._started_ns: int | None = None
         self._now = 0
         self._streams: dict[Hashable, str] = {}  # stream connection → session id
-        self._at_barrier = False
         self.stream_url: str | None = None  # set by the server when it offers the ws binding
 
     @property
@@ -190,16 +193,14 @@ class World:
     def barrier(self) -> bool:
         return self.manifest.get("tick_authority") == "barrier"
 
-    def _new_gripper(self) -> Gripper:
-        width = self.config.gripper_max_width_m
-        return Gripper(width, self.config.gripper_speed_mps, width, _start=width)
-
     def _body(self, embodiment: str) -> Arm | Gripper:
         return self.gripper if embodiment == GRIPPER else self.arm
 
-    def _holder(self, embodiment: str) -> Session | None:
-        bound = self._bound.get(embodiment)
-        return bound[0] if bound else None
+    def _actions_on(self, embodiment: str, besides: Session | None = None) -> Iterator[Action]:
+        """The actions for `embodiment` of every session bound to it but `besides`."""
+        for other in self._bound[embodiment]:
+            if other is not besides:
+                yield from (a for a in other.actions.values() if a.embodiment == embodiment)
 
     # ================================================================ entry points
 
@@ -364,7 +365,7 @@ class World:
                 for e in self._embodiments:
                     self._event(s, "e_stop_engaged", now, {"embodiment": e, "source": source})
                 for a in list(s.actions.values()):
-                    if a.state in (ActionState.EXECUTING, ActionState.CANCELLING):
+                    if a.state in _RUNNING:
                         self._finish(s, a, ActionState.FAILED, now, reason="e_stop", aborted=True)
                     elif a.state.pre_execution:
                         self._finish(s, a, ActionState.CANCELLED, now, reason="e_stop")
@@ -596,9 +597,8 @@ class World:
         if self.config.has("task"):
             s.task = p.get("task")
         if "seed" in p and self.config.has("sim"):
-            self.rng.seed(
-                p["seed"]
-            )  # seeds the noise; the world state is as it stands (AWP-REP-001)
+            # seeds the noise; the world state is as it stands (AWP-REP-001)
+            self.rng.seed(p["seed"])
         self.sessions[s.id] = s
         self._tokens[s.token] = s
         for e in embodiments:
@@ -687,7 +687,7 @@ class World:
                 self._audit.record(s.id, self._clock(s, now), direction, m)
         c.preamble.clear()
         readable = self._readable(s.embodiments, c.consumes)
-        for name in [n for n in s.grants if n not in readable]:
+        for name in [n for n, g in s.grants.items() if n not in readable and not g.command]:
             del s.grants[name]  # the new connection does not consume it (AWP-AGM-001)
         for g in s.grants.values():
             # AWP-TRN-008; in lockstep every per-tick channel restarts from the tick (AWP-TIM-009)
@@ -764,7 +764,7 @@ class World:
             raise AwpError(ErrorCode.PARAMS_INVALID, "seed needs capabilities.seed")
         self._reset_effects(s, now, {"kind": "reset", "initial_state": initial})
         self.arm.reset(HOME)
-        self.gripper.reset(self.config.gripper_max_width_m)
+        self.gripper.reset()
         self.tick = 0
         if "seed" in p:
             self.rng.seed(p["seed"])
@@ -787,13 +787,14 @@ class World:
     def _after_reset(self, c: _Conn, rid: Any, now: int) -> None:
         """AWP-PRM-006 (4): in lockstep a fresh frame carrying the new tick, then the result. A
         world.tick waiting at the barrier was for a tick that is gone."""
-        for other in self.sessions.values():
-            self._drop_tick_request(
-                other,
-                AwpError(
-                    ErrorCode.TICK_MISMATCH, f"the world was reset to {self.tick}", tick=self.tick
-                ),
+        if self.barrier:
+            moved = AwpError(
+                ErrorCode.TICK_MISMATCH,
+                f"a reset or restore moved the tick to {self.tick}",
+                tick=self.tick,
             )
+            for other in self.sessions.values():
+                self._drop_tick_request(other, moved)
         if self.lockstep:
             for other in self.sessions.values():
                 for g in other.grants.values():
@@ -814,7 +815,10 @@ class World:
 
     def load_state(self, state: dict[str, Any]) -> None:
         self.arm = copy.deepcopy(state["arm"])
-        self.gripper = copy.deepcopy(state["gripper"])
+        if "gripper" in state:
+            self.gripper = copy.deepcopy(state["gripper"])
+        else:  # a replay bundle from before the gripper
+            self.gripper.reset()
         self.tick = state["tick"]
         self.rng.setstate(state["rng"])
 
@@ -824,9 +828,8 @@ class World:
         if "snapshot" not in s.admin:
             raise AwpError(ErrorCode.FORBIDDEN, "world.snapshot requires the snapshot admin grant")
         token = "snap_" + secrets.token_urlsafe(18)
-        self._snapshots[token] = (
-            self.world_state()
-        )  # valid for the life of the process (AWP-REP-002)
+        # valid for the life of the process (AWP-REP-002)
+        self._snapshots[token] = self.world_state()
         self._reply(c, rid, {"snapshot_token": token})
 
     def _rpc_world_restore(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
@@ -892,7 +895,7 @@ class World:
         preempt = p.get("preempt") or self._policies(decl)[0]
         busy = self._busy(s, a.group)
         s.actions[a.action_id] = a
-        if embodiment == EMBODIMENT:
+        if embodiment == ARM:
             s.last_admitted_ns = received
         a.replaces = preempt in ("replace", "blend")
         a.blends = preempt == "blend"
@@ -951,7 +954,7 @@ class World:
         interval = S / self.config.max_action_rate_hz  # the arm's envelope; the gripper has none
         clock = self._clock(s, now)
         if (
-            embodiment == EMBODIMENT
+            embodiment == ARM
             and s.last_admitted_ns is not None
             and clock - s.last_admitted_ns < interval
         ):
@@ -979,7 +982,9 @@ class World:
             raise AwpError(ErrorCode.BUSY, f"{group} is busy")
         if policy == "queue" and self._busy(s, group) and len(s.queue(group)) >= decl["max_queue"]:
             raise AwpError(ErrorCode.QUEUE_FULL)
-        if self._embodiments[embodiment].get("shared_control") and self._in_use(embodiment, s):
+        shared = self._embodiments[embodiment].get("shared_control")
+        if shared and any(not a.state.terminal for a in self._actions_on(embodiment, besides=s)):
+            # the arbitration rule of a shared embodiment (AWP-MA-003)
             raise AwpError(ErrorCode.BUSY, f"{embodiment} is in use by another session")
         return decl
 
@@ -996,16 +1001,6 @@ class World:
         if p["type"] not in self._embodiments[embodiment]["action_types"]:
             raise AwpError(ErrorCode.FORBIDDEN, f"{p['type']} is not an action of {embodiment}")
         return embodiment
-
-    def _in_use(self, embodiment: str, besides: Session) -> bool:
-        """Another session has an action for `embodiment` that is not terminal: the arbitration
-        rule of a shared embodiment (AWP-MA-003)."""
-        return any(
-            a.embodiment == embodiment and not a.state.terminal
-            for other in self._bound[embodiment]
-            if other is not besides
-            for a in other.actions.values()
-        )
 
     def _check_envelope(self, params: dict[str, Any]) -> None:
         pose = params["pose"]
@@ -1103,7 +1098,7 @@ class World:
         progress: float | None = None,
         blended: bool | None = None,
     ) -> None:
-        was_executing = a.state in (ActionState.EXECUTING, ActionState.CANCELLING)
+        was_executing = a.state in _RUNNING
         body = self._body(a.embodiment)
         if a.approval_id is not None:
             self._approvals.pop(a.approval_id, None)
@@ -1315,6 +1310,11 @@ class World:
                 self._finish(holder, a, ActionState.CANCELLED, now, reason="transferred")
         holder.embodiments.remove(embodiment)  # with none left, it continues as an observer
         self._bound[embodiment].remove(holder)
+        kept = {t for e in holder.embodiments for t in self._embodiments[e]["action_types"]}
+        holder.action_types = [t for t in holder.action_types if t in kept]
+        readable = self._channels_of(holder.embodiments)
+        for name in [n for n in holder.grants if n not in readable]:
+            del holder.grants[name]
         self._event(holder, "embodiment_transferred", now, {"embodiment": embodiment})
         if not holder.embodiments:
             self._drop_tick_request(holder, AwpError(ErrorCode.TICK_NOT_AUTHORIZED))
@@ -1387,10 +1387,10 @@ class World:
         if violating and not self._violating:
             self.arm.stop()
             for s in list(self.sessions.values()):
-                self._event(s, "envelope_violation", now, {"embodiment": EMBODIMENT})
+                self._event(s, "envelope_violation", now, {"embodiment": ARM})
                 for a in s.running.values():
                     if (
-                        a.embodiment == EMBODIMENT
+                        a.embodiment == ARM
                         and a.state is ActionState.EXECUTING
                         and a.failing_with is None
                     ):
@@ -1419,9 +1419,10 @@ class World:
 
     def _enter_safe_state(self, s: Session, now: int) -> None:
         """AWP-SAF-004: behavior first, then terminations, then the events. A shared embodiment
-        that another session is driving is left to it."""
+        that another session is driving is left to it: stopping it would end that session's
+        action (AWP-MA-004)."""
         for e in s.embodiments:
-            if self._driven_by_other(e, s):
+            if any(a.state in _RUNNING for a in self._actions_on(e, besides=s)):
                 continue
             body = self._body(e)
             body.stop()
@@ -1429,20 +1430,12 @@ class World:
                 body.halt()
         s.safe_state = True
         for a in list(s.actions.values()):
-            if a.state in (ActionState.EXECUTING, ActionState.CANCELLING):
+            if a.state in _RUNNING:
                 self._finish(s, a, ActionState.FAILED, now, reason="connection_lost", aborted=True)
             elif a.state.pre_execution:
                 self._finish(s, a, ActionState.CANCELLED, now, reason="safe_state")
         for e in s.embodiments:
             self._event(s, "safe_state_entered", now, {"behavior": "safe_stop", "embodiment": e})
-
-    def _driven_by_other(self, embodiment: str, s: Session) -> bool:
-        return any(
-            a.embodiment == embodiment
-            for other in self._bound[embodiment]
-            if other is not s
-            for a in other.running.values()
-        )
 
     # ================================================================ lockstep
 
@@ -1467,23 +1460,14 @@ class World:
                 self._advance_tick(now)
             self._reply(c, rid, {"tick": self.tick})
             return
-        if s.tick_request is not None and s.tick_request[0] == c.id:
+        if s.tick_request is not None:
             raise AwpError(ErrorCode.INVALID_REQUEST, "this session's world.tick is pending")
-        s.tick_request = (c.id, rid, count)  # one from a lost connection is replaced
+        s.tick_request = (rid, count)
         self._run_barrier(now)
 
     def _run_barrier(self, now: int) -> None:
         """AWP-TIM-012: advance while every bound, non-observer session has a world.tick pending,
         and answer each once its `count` advances are made."""
-        if self._at_barrier:
-            return
-        self._at_barrier = True
-        try:
-            self._advance_at_barrier(now)
-        finally:
-            self._at_barrier = False
-
-    def _advance_at_barrier(self, now: int) -> None:
         while True:
             bound = [s for s in self.sessions.values() if s.embodiments]
             if not bound or any(s.tick_request is None for s in bound):
@@ -1491,19 +1475,19 @@ class World:
             self._advance_tick(now)
             for s in bound:
                 assert s.tick_request is not None
-                conn, rid, left = s.tick_request
-                s.tick_request = (conn, rid, left - 1) if left > 1 else None
-                if left == 1 and conn in self._conns:
-                    self._reply(self._conns[conn], rid, {"tick": self.tick})
+                rid, left = s.tick_request
+                if left > 1:
+                    s.tick_request = (rid, left - 1)
+                else:
+                    s.tick_request = None
+                    self._to_session(s, jsonrpc.result(rid, {"tick": self.tick}))
 
     def _drop_tick_request(self, s: Session, err: AwpError) -> None:
         """Answer a session's pending world.tick with `err`; nothing advanced for it."""
-        if s.tick_request is None:
-            return
-        conn, rid, _ = s.tick_request
-        s.tick_request = None
-        if conn in self._conns:
-            self._send(self._conns[conn], jsonrpc.error(rid, err))
+        if s.tick_request is not None:
+            rid, _ = s.tick_request
+            s.tick_request = None
+            self._to_session(s, jsonrpc.error(rid, err))
 
     def _advance_tick(self, now: int) -> None:
         """One advance: statuses and events, then a frame per per-tick channel (AWP-TIM-003)."""
@@ -1528,15 +1512,17 @@ class World:
     # ================================================================ frames and telemetry
 
     def _readable(self, embodiments: list[str], consumes: frozenset[str]) -> set[str]:
-        """Channels the session may read: its embodiments' (every channel for an observer), and
-        only in modalities the agent declared (AWP-AGM-001)."""
-        names = (
-            {n for e in embodiments for n in self._embodiments[e]["channels"]}
-            if embodiments
-            else set(self._channels)
-        )
+        """The channels a session may read, in modalities the agent declared (AWP-AGM-001)."""
         return {
-            n for n in names if n in self._channels and self._channels[n]["modality"] in consumes
+            n for n in self._channels_of(embodiments) if self._channels[n]["modality"] in consumes
+        }
+
+    def _channels_of(self, embodiments: list[str]) -> set[str]:
+        """The observation channels of these embodiments; every one for an observer."""
+        if not embodiments:
+            return set(self._channels)
+        return {
+            n for e in embodiments for n in self._embodiments[e]["channels"] if n in self._channels
         }
 
     def _rate(
@@ -1569,7 +1555,7 @@ class World:
             "channels": [g.to_wire() for g in s.grants.values()],
             "action_types": s.action_types,
             "admin": s.admin,
-            "envelopes": [self.config.envelope] if EMBODIMENT in s.embodiments else [],
+            "envelopes": [self.config.envelope] if ARM in s.embodiments else [],
         }
 
     def _may_grant_admin(self, op: str, embodiments: list[str]) -> bool:
@@ -1592,23 +1578,15 @@ class World:
                 "v_mps": [round(v, 6) for v in arm.velocity],
             }
         elif channel == "gripper_state":
-            gripper = self.gripper
-            moving = next(
-                (
-                    a
-                    for other in self._bound[GRIPPER]
-                    for a in other.running.values()
-                    if a.embodiment == GRIPPER
-                ),
-                None,
-            )
             body = {
-                "phase": str(gripper.phase),
-                "width_m": round(gripper.width_m, 6),
-                "action_id": moving.action_id if moving else None,
+                "phase": str(self.gripper.phase),
+                "width_m": round(self.gripper.width_m, 6),
+                "action_id": next(
+                    (a.action_id for a in self._actions_on(GRIPPER) if a.state in _RUNNING), None
+                ),
             }
         else:
-            holder = self._holder(EMBODIMENT)
+            holder = self._bound[ARM][0] if self._bound[ARM] else None
             running = holder.running.get("arm_motion") if holder else None
             body = {
                 "phase": str(arm.phase),
@@ -1733,6 +1711,7 @@ class World:
 
     def _suspend(self, s: Session, now: int, reason: str) -> None:
         self._end_stream(s, "session suspended")
+        s.tick_request = None  # lost with its connection: the barrier waits for a new call
         s.conn = None
         s.suspended_ns = now
         if s.state != "closed":
@@ -1746,9 +1725,8 @@ class World:
             if a.terminal_ns is not None and now - a.terminal_ns > window
         ]
         for action_id in expired:
-            del s.actions[
-                action_id
-            ]  # retained for the window after the terminal transition (AWP-ACT-006)
+            # retained for the window after the terminal transition (AWP-ACT-006)
+            del s.actions[action_id]
         if s.suspended_ns is None:
             return
         away = now - s.suspended_ns
@@ -1832,15 +1810,13 @@ def decode_state(data: dict[str, Any]) -> dict[str, Any]:
 
     arm = {k: tuples(v) for k, v in data["arm"].items()}
     arm["phase"] = Phase(arm["phase"])
-    gripper = dict(data["gripper"])
-    gripper["phase"] = Phase(gripper["phase"])
     version, internal, gauss = data["rng"]
-    return {
-        "arm": Arm(**arm),
-        "gripper": Gripper(**gripper),
-        "tick": data["tick"],
-        "rng": (version, tuple(internal), gauss),
-    }
+    state = {"arm": Arm(**arm), "tick": data["tick"], "rng": (version, tuple(internal), gauss)}
+    if "gripper" in data:  # absent from bundles recorded before the gripper
+        gripper = dict(data["gripper"])
+        gripper["phase"] = Phase(gripper["phase"])
+        state["gripper"] = Gripper(**gripper)
+    return state
 
 
 def encode_config(config: WorldConfig) -> dict[str, Any]:

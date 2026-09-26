@@ -1,6 +1,6 @@
 # AGENTS.md
 
-awp-sim is the reference world for the Agent World Protocol, published on PyPI as `awp-sim`. It serves one simulated arm in either time model. The engine (`src/awp_sim/world.py`) is a sans-IO state machine, and the server wraps it in WebSockets. It speaks AWP through awp-python's protocol layer and targets the revision pinned as the `spec/` submodule.
+awp-sim is the reference world for the Agent World Protocol, published on PyPI as `awp-sim`. It serves a simulated arm, and optionally a gripper, in either time model. The engine (`src/awp_sim/world.py`) is a sans-IO state machine, and the server wraps it in WebSockets. It speaks AWP through awp-python's protocol layer and targets the revision pinned as the `spec/` submodule.
 
 ## Checks
 

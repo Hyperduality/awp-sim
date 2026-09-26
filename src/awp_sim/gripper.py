@@ -18,10 +18,6 @@ class Gripper:
     _target: float | None = None
 
     @property
-    def target(self) -> float | None:
-        return self._target
-
-    @property
     def progress(self) -> float:
         if self._target is None:
             return 0.0
@@ -32,10 +28,6 @@ class Gripper:
     def at_rest(self) -> bool:
         return self.phase is Phase.IDLE
 
-    @property
-    def speed(self) -> float:
-        return self.speed_mps if self.phase is Phase.MOVING else 0.0
-
     def move_to(self, width_m: float) -> None:
         self._start = self.width_m
         self._target = width_m
@@ -43,15 +35,15 @@ class Gripper:
 
     def stop(self) -> None:
         """The fingers stop where they are."""
-        if self.phase is Phase.MOVING:
-            self.phase = Phase.IDLE
+        self.phase = Phase.IDLE
 
     def halt(self) -> None:
         self.phase = Phase.IDLE
 
-    def reset(self, width_m: float) -> None:
+    def reset(self) -> None:
+        """Fully open, at rest."""
         self.halt()
-        self.width_m = self._start = width_m
+        self.width_m = self._start = self.max_width_m
         self._target = None
 
     def step(self, dt_s: float) -> None:

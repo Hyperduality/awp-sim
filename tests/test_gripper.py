@@ -9,19 +9,14 @@ from awp.client import FrameReceived, TickCompleted, WorldEvent
 from awp.errors import AwpError, ErrorCode
 
 from awp_sim.config import WorldConfig
+from awp_sim.world import decode_state, encode_state
 
-from .helpers import assert_wire_valid, events, make_net, pose, statuses
+from .helpers import assert_wire_valid, events, make_net, pose, refused, statuses
 
 FAR = pose(0.4, 0.4, 0.6)
 CLOSED = {"width_m": 0.0}
 HALF = {"width_m": 0.04}
 BOTH = ["arm_01", "gripper_01"]
-
-
-def refused(fn):
-    with pytest.raises(AwpError) as exc:
-        fn()
-    return exc.value.code
 
 
 def world(*features, mode="streaming", **config):
@@ -63,7 +58,7 @@ def test_the_gripper_joins_the_arm_in_one_multi_bind_group(mode):
     assert m.get("tick_authority") == ("barrier" if mode == "lockstep" else None)  # AWP-MA-005
 
 
-def test_without_the_gripper_the_arm_has_no_group():
+def test_without_the_gripper_there_is_no_group_and_multi_bind_is_refused():
     arm = WorldConfig().manifest()["embodiments"][0]
     assert "multi_bind_group" not in arm
     net = make_net()
@@ -100,7 +95,7 @@ def test_one_session_binds_both_and_names_the_embodiment_of_each_action():
     assert_wire_valid(a)
 
 
-def test_binding_embodiments_outside_one_group_is_refused():
+def test_binding_an_unknown_embodiment_is_refused():
     net = world()
     a = net.agent()
     a.connect()
@@ -121,6 +116,20 @@ def test_the_arm_stays_exclusive():
     b.call(b.client.open_session("streaming", embodiment="gripper_01"))
 
 
+def test_a_takeover_cannot_bind_several_embodiments():
+    net = world("transfer")
+    old = agent(net, "old", embodiments=BOTH)
+    token = old.call(old.client.transfer())["transfer_token"]
+    new = net.agent("new")
+    new.connect()
+    new.call(new.client.initialize())
+    rid = new.client.open_session(
+        "streaming", embodiments=BOTH, takeover=True, transfer_token=token
+    )
+    assert refused(lambda: new.call(rid)) == ErrorCode.EMBODIMENT_UNAVAILABLE
+    assert net.world.sessions[old.client.ready["session_id"]].embodiments == BOTH
+
+
 # ---------------------------------------------------------------- shared control
 
 
@@ -136,6 +145,15 @@ def test_the_shared_gripper_goes_to_whoever_asked_first():
     assert b.client.actions[second].state == "completed"
     net.advance(200)
     assert gripper_frames(a)[-1]["width_m"] == 0.04  # both see the one gripper
+
+
+def test_the_gripper_is_held_from_admission_not_only_while_it_moves():
+    net = world(mode="lockstep")
+    a = agent(net, "a", mode="lockstep", embodiment="gripper_01")
+    b = agent(net, "b", mode="lockstep", embodiment="gripper_01")
+    grip = a.submit("gripper_move", CLOSED)
+    assert a.client.actions[grip].state == "accepted"  # it executes on the next advance
+    assert refused(lambda: b.submit("gripper_move", HALF)) == ErrorCode.BUSY
 
 
 def test_a_quiet_sharer_does_not_stop_the_other_ones_grip():
@@ -185,6 +203,20 @@ def test_a_transfer_moves_one_of_the_holders_embodiments():
     again = lambda: old.submit("move_to_pose", FAR, embodiment_id="arm_01")  # noqa: E731
     assert refused(again) == ErrorCode.FORBIDDEN
     old.submit("gripper_move", HALF)  # one embodiment left: embodiment_id may be left out
+
+
+def test_a_transfer_takes_the_embodiments_action_types_and_channels_with_it():
+    net = world("transfer")
+    old = agent(net, "old", embodiments=BOTH, subscribe=["proprio", "arm_state", "gripper_state"])
+    token = old.call(old.client.transfer())["transfer_token"]
+    agent(net, "new", embodiment="arm_01", takeover=True, transfer_token=token)
+    s = net.world.sessions[old.client.ready["session_id"]]
+    assert s.action_types == ["gripper_move"]
+    assert set(s.grants) == {"gripper_state"}
+    assert refused(lambda: old.submit("move_to_pose", FAR)) == ErrorCode.FORBIDDEN
+    seen = len(old.of(FrameReceived))
+    net.advance(500)
+    assert {e.channel for e in old.of(FrameReceived)[seen:]} == {"gripper_state"}
 
 
 # ---------------------------------------------------------------- the barrier
@@ -238,7 +270,7 @@ def test_a_closing_session_releases_the_barrier():
     assert a.call(rid) == {"tick": 1}
 
 
-def test_a_reset_answers_a_waiting_tick_with_the_new_tick():
+def test_a_reset_refuses_a_waiting_tick_with_the_new_tick():
     net = world(mode="lockstep")
     a = agent(net, "a", mode="lockstep", embodiment="arm_01", admin=["reset"])
     b = agent(net, "b", mode="lockstep", embodiment="gripper_01")
@@ -253,19 +285,20 @@ def test_a_reset_answers_a_waiting_tick_with_the_new_tick():
     assert exc.value.data["tick"] == 0 == net.world.tick
 
 
-def test_a_tick_from_a_new_connection_replaces_the_lost_one():
+def test_a_tick_is_lost_with_its_connection():
     net = world(mode="lockstep")
     a, b = lockstep_pair(net)
     a.client.advance()
     net.settle()
     a.drop()
+    rid = b.client.advance()
+    assert pending(b, rid)  # the barrier waits for a call from the resumed session
+    assert net.world.tick == 0
     a.connect()
     a.call(a.client.initialize())
     a.call(a.client.resume())
-    rid = a.client.advance()
-    assert pending(a, rid)
-    assert b.call(b.client.advance()) == {"tick": 1}
-    assert a.call(rid) == {"tick": 1}
+    assert a.call(a.client.advance()) == {"tick": 1}
+    assert b.call(rid) == {"tick": 1}
 
 
 def test_a_restore_brings_the_gripper_back():
@@ -277,6 +310,17 @@ def test_a_restore_brings_the_gripper_back():
     assert net.world.gripper.width_m < 0.08
     a.call(a.client.restore(token))
     assert net.world.gripper.width_m == 0.08  # AWP-REP-002
+
+
+def test_a_state_recorded_before_the_gripper_loads_with_it_open():
+    w = world("sim", mode="lockstep").world
+    w.gripper.move_to(0.0)
+    w.gripper.step(1.0)
+    data = encode_state(w.world_state())
+    del data["gripper"]
+    w.load_state(decode_state(data))
+    assert w.gripper.width_m == 0.08
+    assert w.gripper.at_rest
 
 
 def test_an_e_stop_is_reported_for_each_embodiment():
