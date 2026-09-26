@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a3"
+    "version": "0.1.0a4"
   },
   "specification": "0.1-draft.9",
   "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-25T21:55:28Z",
+  "generated": "2026-09-25T23:42:53Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a3)",
+    "wording": "Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a4)",
     "classes": [
       "Core World"
     ],
@@ -458,7 +458,7 @@
       "id": "AWP-DAT-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "49 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/deadlines, streaming/envelope, streaming/estop, streaming/grants, streaming/half-open-replaced, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/observer-session, streaming/one-session-per-connection, streaming/open-refusals, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/transfer-offered, streaming/watchdog, streaming/window-expiry, streaming/ws-stream"
+      "detail": "49 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/deadlines, streaming/envelope, streaming/estop, streaming/grants, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/observer-session, streaming/one-session-per-connection, streaming/open-refusals, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/transfer-offered, streaming/watchdog, streaming/window-expiry, streaming/ws-stream"
     },
     {
       "id": "AWP-DAT-002",
@@ -818,7 +818,7 @@
       "id": "AWP-OBS-003",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "49 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/deadlines, streaming/envelope, streaming/estop, streaming/grants, streaming/half-open-replaced, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/observer-session, streaming/one-session-per-connection, streaming/open-refusals, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/transfer-offered, streaming/watchdog, streaming/window-expiry, streaming/ws-stream"
+      "detail": "49 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/deadlines, streaming/envelope, streaming/estop, streaming/grants, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/observer-session, streaming/one-session-per-connection, streaming/open-refusals, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/transfer-offered, streaming/watchdog, streaming/window-expiry, streaming/ws-stream"
     },
     {
       "id": "AWP-OBS-004",
@@ -1310,7 +1310,7 @@
       "id": "AWP-TRN-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "49 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/deadlines, streaming/envelope, streaming/estop, streaming/grants, streaming/half-open-replaced, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/observer-session, streaming/one-session-per-connection, streaming/open-refusals, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/transfer-offered, streaming/watchdog, streaming/window-expiry, streaming/ws-stream"
+      "detail": "49 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/deadlines, streaming/envelope, streaming/estop, streaming/grants, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/observer-session, streaming/one-session-per-connection, streaming/open-refusals, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/transfer-offered, streaming/watchdog, streaming/window-expiry, streaming/ws-stream"
     },
     {
       "id": "AWP-TRN-008",
