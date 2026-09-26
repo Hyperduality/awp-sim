@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0a7
+
+Targets specification revision `0.1-draft.10`.
+
+- A second `world.tick` from a session whose barrier call is pending is refused with `AWP_BUSY` (AWP-TIM-014).
+- The reports come from awp-conformance 0.1.0a7.
+
 ## 0.1.0a6
 
 Targets specification revision `0.1-draft.9`.
