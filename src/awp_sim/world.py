@@ -27,7 +27,8 @@ from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 
 from .arm import Arm, Phase
-from .config import EMBODIMENT, FRAME_TREE, HOME, PARK, SERVO_CHANNEL, WorldConfig
+from .config import EMBODIMENT, FRAME_TREE, GRIPPER, HOME, PARK, SERVO_CHANNEL, WorldConfig
+from .gripper import Gripper
 from .session import Action, ChannelGrant, Session, Standing, Telemetry
 
 MS = 1_000_000
@@ -119,10 +120,12 @@ class World:
         self._params = schema.ParamsValidator(self.manifest)
         self._decls = {d["type"]: d for d in self.manifest["action_schemas"]}
         self._channels = {c["id"]: c for c in self.manifest["observation_channels"]}
+        self._embodiments = {e["id"]: e for e in self.manifest["embodiments"]}
         self._audit = audit
         self._wall_clock = wall_clock
 
         self.arm = Arm(position=HOME, accel_mps2=self.config.accel_mps2, bounds=self.config.aabb_m)
+        self.gripper = self._new_gripper()
         self.tick = 0  # the world's tick: reset and restore move it
         self.advances = 0  # every advance ever made: the lockstep session clock (AWP-TIM-013)
         self.rng = random.Random(0)  # simulated sensor noise, seeded (AWP-REP-001)
@@ -135,12 +138,13 @@ class World:
         self._tokens: dict[str, Session] = {}
         self._closed_tokens: OrderedDict[str, None] = OrderedDict()
         self._conns: dict[Hashable, _Conn] = {}
-        self._holder: Session | None = None
+        self._bound: dict[str, list[Session]] = {e: [] for e in self._embodiments}
         self._last_step_ns: int | None = None
         self._out: list[Output] = []
         self._started_ns: int | None = None
         self._now = 0
         self._streams: dict[Hashable, str] = {}  # stream connection → session id
+        self._at_barrier = False
         self.stream_url: str | None = None  # set by the server when it offers the ws binding
 
     @property
@@ -181,6 +185,21 @@ class World:
     @property
     def lockstep(self) -> bool:
         return self.config.mode == "lockstep"
+
+    @property
+    def barrier(self) -> bool:
+        return self.manifest.get("tick_authority") == "barrier"
+
+    def _new_gripper(self) -> Gripper:
+        width = self.config.gripper_max_width_m
+        return Gripper(width, self.config.gripper_speed_mps, width, _start=width)
+
+    def _body(self, embodiment: str) -> Arm | Gripper:
+        return self.gripper if embodiment == GRIPPER else self.arm
+
+    def _holder(self, embodiment: str) -> Session | None:
+        bound = self._bound.get(embodiment)
+        return bound[0] if bound else None
 
     # ================================================================ entry points
 
@@ -302,7 +321,7 @@ class World:
         self._started_ns = self._started_ns if self._started_ns is not None else now
         if not self.lockstep:
             last = self._last_step_ns if self._last_step_ns is not None else now
-            self._step_arm(now - last)
+            self._step_bodies(now - last)
             self._last_step_ns = now
             self._monitor_envelope(now)
         for s in list(self.sessions.values()):
@@ -340,8 +359,10 @@ class World:
         if not self.estop:
             self.estop = True
             self.arm.halt()
+            self.gripper.halt()
             for s in list(self.sessions.values()):
-                self._event(s, "e_stop_engaged", now, {"embodiment": EMBODIMENT, "source": source})
+                for e in self._embodiments:
+                    self._event(s, "e_stop_engaged", now, {"embodiment": e, "source": source})
                 for a in list(s.actions.values()):
                     if a.state in (ActionState.EXECUTING, ActionState.CANCELLING):
                         self._finish(s, a, ActionState.FAILED, now, reason="e_stop", aborted=True)
@@ -360,7 +381,8 @@ class World:
         if self.estop:
             self.estop = False
             for s in list(self.sessions.values()):
-                self._event(s, "e_stop_released", now, {"embodiment": EMBODIMENT})
+                for e in self._embodiments:
+                    self._event(s, "e_stop_released", now, {"embodiment": e})
         return self._flush()
 
     def session_of(self, conn: Hashable) -> Session | None:
@@ -532,16 +554,10 @@ class World:
             raise AwpError(ErrorCode.SESSION_EXISTS)
         if p["mode"] != self.config.mode:
             raise AwpError(ErrorCode.TIME_MODEL_UNSUPPORTED, f"this world runs {self.config.mode}")
-        if "embodiments" in p:
-            raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "multi-bind is not offered")
         if p.get("takeover") and not self.config.has("transfer"):
             raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "transfer is not offered")
-        embodiment = p.get("embodiment")
-        if embodiment is not None and embodiment != EMBODIMENT:
-            raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"unknown embodiment {embodiment}")
-        if embodiment is not None and self._holder is not None and not p.get("takeover"):
-            raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"{embodiment} is bound elsewhere")
-        readable = self._readable(embodiment, c.consumes)
+        embodiments = self._to_bind(p)
+        readable = self._readable(embodiments, c.consumes)
         requested = p.get("subscribe", [])
         for sub in requested:
             if sub["channel"] not in self._channels:
@@ -551,15 +567,15 @@ class World:
         if p.get("takeover"):
             self._take_over(p, now)
 
-        offered = self.manifest["embodiments"][0]["action_types"] if embodiment else []
+        offered = [t for e in embodiments for t in self._embodiments[e]["action_types"]]
         wanted = p.get("action_types", offered)
-        admin = [op for op in p.get("admin", []) if self._may_grant_admin(op, embodiment)]
+        admin = [op for op in p.get("admin", []) if self._may_grant_admin(op, embodiments)]
         session_id = f"sess_{secrets.token_hex(6)}"
         s = Session(
             id=session_id,
             token=self._new_session_token(),
             mode=p["mode"],
-            embodiment=embodiment,
+            embodiments=embodiments,
             origin_ns=now,
             clock_anchor=self._wall_clock().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             conn=c.id,
@@ -585,8 +601,8 @@ class World:
             )  # seeds the noise; the world state is as it stands (AWP-REP-001)
         self.sessions[s.id] = s
         self._tokens[s.token] = s
-        if embodiment is not None:
-            self._holder = s
+        for e in embodiments:
+            self._bound[e].append(s)
         c.session = s
         if self._audit is not None:
             header: dict[str, Any] = {"manifest": self.manifest, "session_id": s.id}
@@ -620,6 +636,29 @@ class World:
         for g in s.grants.values():
             self._emit_frame(s, g, now)  # initial observation (AWP-TIM-009, AWP-OBS-005)
 
+    def _to_bind(self, p: dict[str, Any]) -> list[str]:
+        """The embodiments a session.open binds, refused before anything changes (AWP-EMB-001,
+        AWP-EMB-005)."""
+        if "embodiments" in p:
+            names = list(p["embodiments"])
+            if p.get("takeover"):
+                raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "a takeover binds one embodiment")
+        else:
+            names = [p["embodiment"]] if p.get("embodiment") is not None else []
+        for e in names:
+            if e not in self._embodiments:
+                raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"unknown embodiment {e}")
+        groups = {self._embodiments[e].get("multi_bind_group") for e in names}
+        if len(names) > 1 and (None in groups or len(groups) > 1):
+            raise AwpError(
+                ErrorCode.EMBODIMENT_UNAVAILABLE, f"{names} do not share a multi_bind_group"
+            )
+        for e in names:
+            shared = self._embodiments[e].get("shared_control")
+            if self._bound[e] and not shared and not p.get("takeover"):
+                raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, f"{e} is bound elsewhere")
+        return names
+
     def _rpc_session_resume(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
         if c.session is not None:
             raise AwpError(ErrorCode.SESSION_EXISTS)
@@ -647,7 +686,7 @@ class World:
             if self._audit is not None:
                 self._audit.record(s.id, self._clock(s, now), direction, m)
         c.preamble.clear()
-        readable = self._readable(s.embodiment, c.consumes)
+        readable = self._readable(s.embodiments, c.consumes)
         for name in [n for n in s.grants if n not in readable]:
             del s.grants[name]  # the new connection does not consume it (AWP-AGM-001)
         for g in s.grants.values():
@@ -684,7 +723,7 @@ class World:
     def _rpc_obs_subscribe(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
         s = c.session
         assert s is not None
-        readable = self._readable(s.embodiment, c.consumes)
+        readable = self._readable(s.embodiments, c.consumes)
         for sub in p["channels"]:
             if sub["channel"] not in self._channels:
                 raise AwpError(ErrorCode.CHANNEL_UNKNOWN, sub["channel"])
@@ -725,6 +764,7 @@ class World:
             raise AwpError(ErrorCode.PARAMS_INVALID, "seed needs capabilities.seed")
         self._reset_effects(s, now, {"kind": "reset", "initial_state": initial})
         self.arm.reset(HOME)
+        self.gripper.reset(self.config.gripper_max_width_m)
         self.tick = 0
         if "seed" in p:
             self.rng.seed(p["seed"])
@@ -745,7 +785,15 @@ class World:
                     self._finish(other, a, ActionState.CANCELLED, now, reason="world_reset")
 
     def _after_reset(self, c: _Conn, rid: Any, now: int) -> None:
-        """AWP-PRM-006 (4): in lockstep a fresh frame carrying the new tick, then the result."""
+        """AWP-PRM-006 (4): in lockstep a fresh frame carrying the new tick, then the result. A
+        world.tick waiting at the barrier was for a tick that is gone."""
+        for other in self.sessions.values():
+            self._drop_tick_request(
+                other,
+                AwpError(
+                    ErrorCode.TICK_MISMATCH, f"the world was reset to {self.tick}", tick=self.tick
+                ),
+            )
         if self.lockstep:
             for other in self.sessions.values():
                 for g in other.grants.values():
@@ -755,11 +803,18 @@ class World:
     # ================================================================ snapshots (sim)
 
     def world_state(self) -> dict[str, Any]:
-        """Everything restore brings back: the arm, the tick, and the noise generator."""
-        return {"arm": copy.deepcopy(self.arm), "tick": self.tick, "rng": self.rng.getstate()}
+        """Everything restore brings back: the arm, the gripper, the tick, and the noise
+        generator."""
+        return {
+            "arm": copy.deepcopy(self.arm),
+            "gripper": copy.deepcopy(self.gripper),
+            "tick": self.tick,
+            "rng": self.rng.getstate(),
+        }
 
     def load_state(self, state: dict[str, Any]) -> None:
         self.arm = copy.deepcopy(state["arm"])
+        self.gripper = copy.deepcopy(state["gripper"])
         self.tick = state["tick"]
         self.rng.setstate(state["rng"])
 
@@ -821,8 +876,11 @@ class World:
             self._reply(c, rid, {**result, "received_ts_mono_ns": known.received_ns})
             return
         decl = self._admit(s, p, received, now)
-        a = Action(p["action_id"], p, decl, received_ns=received)
-        if decl["type"] == "move_to_pose":
+        embodiment = self._embodiment_of(s, p)
+        a = Action(p["action_id"], p, decl, received_ns=received, embodiment=embodiment)
+        if decl["type"] == "gripper_move":
+            a.width_m = float(p["params"]["width_m"])
+        elif decl["type"] == "move_to_pose":
             pose = p["params"]["pose"]
             a.target = (pose["p_m"][0], pose["p_m"][1], pose["p_m"][2])
             a.v_max = p["params"].get("max_velocity_mps", self.config.max_velocity_mps)
@@ -834,7 +892,8 @@ class World:
         preempt = p.get("preempt") or self._policies(decl)[0]
         busy = self._busy(s, a.group)
         s.actions[a.action_id] = a
-        s.last_admitted_ns = received
+        if embodiment == EMBODIMENT:
+            s.last_admitted_ns = received
         a.replaces = preempt in ("replace", "blend")
         a.blends = preempt == "blend"
         if a.replaces:
@@ -882,17 +941,20 @@ class World:
 
     def _admit(self, s: Session, p: dict[str, Any], received: int, now: int) -> dict[str, Any]:
         """Admission checks, in the order a first-time submission is refused."""
-        if s.embodiment is None:
+        if not s.embodiments:
             raise AwpError(ErrorCode.FORBIDDEN, "observer sessions cannot act (AWP-EMB-004)")
         if p["type"] not in s.action_types:
             raise AwpError(ErrorCode.FORBIDDEN, f"{p['type']} is not granted")
-        if p.get("embodiment_id", s.embodiment) != s.embodiment:
-            raise AwpError(ErrorCode.FORBIDDEN, f"{p['embodiment_id']} is not bound")
+        embodiment = self._embodiment_of(s, p)
         if self.estop:
             raise AwpError(ErrorCode.ESTOP_ACTIVE)
-        interval = S / self.config.max_action_rate_hz
+        interval = S / self.config.max_action_rate_hz  # the arm's envelope; the gripper has none
         clock = self._clock(s, now)
-        if s.last_admitted_ns is not None and clock - s.last_admitted_ns < interval:
+        if (
+            embodiment == EMBODIMENT
+            and s.last_admitted_ns is not None
+            and clock - s.last_admitted_ns < interval
+        ):
             wait = (s.last_admitted_ns + interval - clock) / MS
             raise AwpError(
                 ErrorCode.ENVELOPE_EXCEEDED,
@@ -917,7 +979,33 @@ class World:
             raise AwpError(ErrorCode.BUSY, f"{group} is busy")
         if policy == "queue" and self._busy(s, group) and len(s.queue(group)) >= decl["max_queue"]:
             raise AwpError(ErrorCode.QUEUE_FULL)
+        if self._embodiments[embodiment].get("shared_control") and self._in_use(embodiment, s):
+            raise AwpError(ErrorCode.BUSY, f"{embodiment} is in use by another session")
         return decl
+
+    def _embodiment_of(self, s: Session, p: dict[str, Any]) -> str:
+        """The bound embodiment a submission is for (AWP-ACT-003, AWP-EMB-005)."""
+        embodiment = p.get("embodiment_id")
+        if embodiment is None and len(s.embodiments) > 1:
+            raise AwpError(
+                ErrorCode.INVALID_PARAMS, "embodiment_id is required in a multi-bind session"
+            )
+        embodiment = embodiment or s.embodiments[0]
+        if embodiment not in s.embodiments:
+            raise AwpError(ErrorCode.FORBIDDEN, f"{embodiment} is not bound")
+        if p["type"] not in self._embodiments[embodiment]["action_types"]:
+            raise AwpError(ErrorCode.FORBIDDEN, f"{p['type']} is not an action of {embodiment}")
+        return embodiment
+
+    def _in_use(self, embodiment: str, besides: Session) -> bool:
+        """Another session has an action for `embodiment` that is not terminal: the arbitration
+        rule of a shared embodiment (AWP-MA-003)."""
+        return any(
+            a.embodiment == embodiment and not a.state.terminal
+            for other in self._bound[embodiment]
+            if other is not besides
+            for a in other.actions.values()
+        )
 
     def _check_envelope(self, params: dict[str, Any]) -> None:
         pose = params["pose"]
@@ -986,7 +1074,9 @@ class World:
         a.last_progress_ns = now
         a.last_frame_ns = now
         exiting_safe_state = s.safe_state
-        if a.target is not None:
+        if a.width_m is not None:
+            self.gripper.move_to(a.width_m)
+        elif a.target is not None:
             self.arm.move_to(a.target, a.v_max)
         elif a.decl["duration"] == "streaming":
             self.arm.servo()  # setpoints arrive on the command channel (AWP-CMD-003)
@@ -995,7 +1085,8 @@ class World:
             self.arm.stop()
         if exiting_safe_state:
             s.safe_state = False
-            self._event(s, "safe_state_exited", now, {"embodiment": EMBODIMENT})  # AWP-SAF-008
+            for e in s.embodiments:
+                self._event(s, "safe_state_exited", now, {"embodiment": e})  # AWP-SAF-008
         self._transition(s, a, ActionState.EXECUTING, now, progress=0.0)
         if a.decl["duration"] == "instant":
             self._finish(s, a, ActionState.COMPLETED, now, progress=1.0)
@@ -1013,6 +1104,7 @@ class World:
         blended: bool | None = None,
     ) -> None:
         was_executing = a.state in (ActionState.EXECUTING, ActionState.CANCELLING)
+        body = self._body(a.embodiment)
         if a.approval_id is not None:
             self._approvals.pop(a.approval_id, None)
         self._transition(
@@ -1023,7 +1115,7 @@ class World:
             reason=reason,
             progress=progress,
             blended=blended,
-            aborted_at_progress=round(self.arm.progress, 4) if aborted else None,
+            aborted_at_progress=round(body.progress, 4) if aborted else None,
             stream=a.stream,
         )
         if s.running.get(a.group) is a:
@@ -1033,8 +1125,8 @@ class World:
             queue.remove(a)
         if a in s.staged:
             s.staged.remove(a)
-        if was_executing and self.arm.phase in (Phase.MOVING, Phase.SERVO) and not blended:
-            self.arm.stop()
+        if was_executing and body.phase in (Phase.MOVING, Phase.SERVO) and not blended:
+            body.stop()
 
     def _rpc_action_cancel(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
         s = c.session
@@ -1050,7 +1142,7 @@ class World:
             a.state = ActionState.CANCELLING
             a.cancel_reason = "cancelled_by_agent"
             a.cancel_started_ns = now
-            self.arm.stop()
+            self._body(a.embodiment).stop()
             res = self._result_status(s, a, now, reason="cancelled_by_agent")
         else:
             res = a.status  # cancelling or terminal: nothing changes
@@ -1102,7 +1194,7 @@ class World:
             "action_id": a.action_id,
             "type": a.type,
             "params": a.content["params"],
-            "requester": {"session": s.id, "embodiment": s.embodiment},
+            "requester": {"session": s.id, "embodiment": a.embodiment},
             "expires_at_ns": expires,
         }
         if s.task is not None:
@@ -1191,7 +1283,7 @@ class World:
     def _rpc_session_transfer(self, c: _Conn, rid: Any, p: dict[str, Any], now: int) -> None:
         s = c.session
         assert s is not None
-        if s.embodiment is None:
+        if not s.embodiments:
             raise AwpError(ErrorCode.FORBIDDEN, "only the holder of an embodiment can transfer it")
         ttl = p.get("expires_in_ms", 30000)
         token = "tt_" + secrets.token_urlsafe(18)
@@ -1199,17 +1291,19 @@ class World:
         self._reply(c, rid, {"transfer_token": token, "expires_in_ms": ttl})
 
     def _take_over(self, p: dict[str, Any], now: int) -> None:
-        """AWP-EMB-003: a single-use token from the holder moves the embodiment to this open."""
+        """AWP-EMB-003: a single-use token from the holder moves the embodiment to this open. A
+        holder bound to several keeps the others."""
         entry = self._transfers.pop(p.get("transfer_token", ""), None)
         holder = self.sessions.get(entry[0]) if entry else None
+        embodiment = p.get("embodiment")
         if (
             entry is None
             or now > entry[1]
             or holder is None
-            or holder.embodiment != p.get("embodiment")
+            or embodiment not in holder.embodiments
         ):
             raise AwpError(ErrorCode.EMBODIMENT_UNAVAILABLE, "invalid or expired transfer_token")
-        for a in list(holder.actions.values()):
+        for a in [a for a in holder.actions.values() if a.embodiment == embodiment]:
             if a.state is ActionState.EXECUTING:
                 self._finish(holder, a, ActionState.PREEMPTED, now, reason="transferred")
             elif a.state is ActionState.CANCELLING:  # the abort ends as it would have (AWP-LIF-008)
@@ -1219,23 +1313,26 @@ class World:
                 )
             elif a.state.pre_execution:
                 self._finish(holder, a, ActionState.CANCELLED, now, reason="transferred")
-        detail = {"embodiment": holder.embodiment}
-        holder.embodiment = None  # it continues as an observer session
-        self._holder = None
-        self._event(holder, "embodiment_transferred", now, detail)
+        holder.embodiments.remove(embodiment)  # with none left, it continues as an observer
+        self._bound[embodiment].remove(holder)
+        self._event(holder, "embodiment_transferred", now, {"embodiment": embodiment})
+        if not holder.embodiments:
+            self._drop_tick_request(holder, AwpError(ErrorCode.TICK_NOT_AUTHORIZED))
 
     # ================================================================ execution
 
-    def _step_arm(self, dt_ns: int) -> None:
+    def _step_bodies(self, dt_ns: int) -> None:
         while dt_ns > 0:
             step = min(dt_ns, 5 * MS)
             self.arm.step(step / S)
+            self.gripper.step(step / S)
             dt_ns -= step
 
     def _update_actions(self, s: Session, now: int) -> None:
         for a in list(s.running.values()):
+            body = self._body(a.embodiment)
             aborting = a.state is ActionState.CANCELLING or a.failing_with is not None
-            if aborting and self.arm.at_rest:
+            if aborting and body.at_rest:
                 if a.state is ActionState.CANCELLING:
                     self._finish(
                         s, a, ActionState.CANCELLED, now, reason=a.cancel_reason, aborted=True
@@ -1249,17 +1346,17 @@ class World:
                 if now - a.last_frame_ns > a.decl["watchdog_ms"] * MS:  # AWP-CMD-005
                     a.failing_with = "watchdog"
                     a.cancel_started_ns = now
-                    self.arm.stop()
+                    body.stop()
                 elif self._progress_due(a, now):
                     a.last_progress_ns = now
                     self._transition(s, a, ActionState.EXECUTING, now, stream=dict(a.stream or {}))
             elif a.state is ActionState.EXECUTING and not aborting:
-                if self.arm.phase is Phase.IDLE and self.arm.at_rest:
+                if body.phase is Phase.IDLE and body.at_rest:
                     self._finish(s, a, ActionState.COMPLETED, now, progress=1.0)
                 elif self._progress_due(a, now):
                     a.last_progress_ns = now
                     self._transition(
-                        s, a, ActionState.EXECUTING, now, progress=round(self.arm.progress, 4)
+                        s, a, ActionState.EXECUTING, now, progress=round(body.progress, 4)
                     )
         for group in [g for g, q in s.queues.items() if q and g not in s.running]:
             self._promote(s, group, now)
@@ -1292,7 +1389,11 @@ class World:
             for s in list(self.sessions.values()):
                 self._event(s, "envelope_violation", now, {"embodiment": EMBODIMENT})
                 for a in s.running.values():
-                    if a.state is ActionState.EXECUTING and a.failing_with is None:
+                    if (
+                        a.embodiment == EMBODIMENT
+                        and a.state is ActionState.EXECUTING
+                        and a.failing_with is None
+                    ):
                         a.failing_with = "envelope"
                         a.cancel_started_ns = now
         self._violating = violating
@@ -1308,27 +1409,39 @@ class World:
             elif a.state is ActionState.EXECUTING and a.failing_with is None:
                 a.failing_with = "deadline_exceeded"  # fails once the safe abort completes
                 a.cancel_started_ns = now
-                self.arm.stop()
+                self._body(a.embodiment).stop()
 
     def _check_watchdog(self, s: Session, now: int) -> None:
-        if s.embodiment is None or s.safe_state or s.state == "closed":
+        if not s.embodiments or s.safe_state or s.state == "closed":
             return
         if now - s.last_agent_ns > self.config.watchdog_ms * MS:
             self._enter_safe_state(s, now)
 
     def _enter_safe_state(self, s: Session, now: int) -> None:
-        """AWP-SAF-004: behavior first, then terminations, then the event."""
-        self.arm.stop()
-        if self.arm.stuck:
-            self.arm.halt()
+        """AWP-SAF-004: behavior first, then terminations, then the events. A shared embodiment
+        that another session is driving is left to it."""
+        for e in s.embodiments:
+            if self._driven_by_other(e, s):
+                continue
+            body = self._body(e)
+            body.stop()
+            if isinstance(body, Arm) and body.stuck:
+                body.halt()
         s.safe_state = True
         for a in list(s.actions.values()):
             if a.state in (ActionState.EXECUTING, ActionState.CANCELLING):
                 self._finish(s, a, ActionState.FAILED, now, reason="connection_lost", aborted=True)
             elif a.state.pre_execution:
                 self._finish(s, a, ActionState.CANCELLED, now, reason="safe_state")
-        self._event(
-            s, "safe_state_entered", now, {"behavior": "safe_stop", "embodiment": EMBODIMENT}
+        for e in s.embodiments:
+            self._event(s, "safe_state_entered", now, {"behavior": "safe_stop", "embodiment": e})
+
+    def _driven_by_other(self, embodiment: str, s: Session) -> bool:
+        return any(
+            a.embodiment == embodiment
+            for other in self._bound[embodiment]
+            if other is not s
+            for a in other.running.values()
         )
 
     # ================================================================ lockstep
@@ -1338,7 +1451,7 @@ class World:
         assert s is not None
         if not self.lockstep:
             raise AwpError(ErrorCode.TIME_MODEL_UNSUPPORTED, "world.tick is lockstep-only")
-        if s.embodiment is None:
+        if not s.embodiments:
             raise AwpError(ErrorCode.TICK_NOT_AUTHORIZED, "observer sessions cannot tick")
         if p["expected_tick"] != self.tick:
             raise AwpError(
@@ -1349,9 +1462,48 @@ class World:
         count = p.get("count", 1)
         if not 1 <= count <= 10_000:
             raise AwpError(ErrorCode.INVALID_PARAMS, "count must be 1..10000")
-        for _ in range(count):
+        if not self.barrier:
+            for _ in range(count):
+                self._advance_tick(now)
+            self._reply(c, rid, {"tick": self.tick})
+            return
+        if s.tick_request is not None and s.tick_request[0] == c.id:
+            raise AwpError(ErrorCode.INVALID_REQUEST, "this session's world.tick is pending")
+        s.tick_request = (c.id, rid, count)  # one from a lost connection is replaced
+        self._run_barrier(now)
+
+    def _run_barrier(self, now: int) -> None:
+        """AWP-TIM-012: advance while every bound, non-observer session has a world.tick pending,
+        and answer each once its `count` advances are made."""
+        if self._at_barrier:
+            return
+        self._at_barrier = True
+        try:
+            self._advance_at_barrier(now)
+        finally:
+            self._at_barrier = False
+
+    def _advance_at_barrier(self, now: int) -> None:
+        while True:
+            bound = [s for s in self.sessions.values() if s.embodiments]
+            if not bound or any(s.tick_request is None for s in bound):
+                return
             self._advance_tick(now)
-        self._reply(c, rid, {"tick": self.tick})
+            for s in bound:
+                assert s.tick_request is not None
+                conn, rid, left = s.tick_request
+                s.tick_request = (conn, rid, left - 1) if left > 1 else None
+                if left == 1 and conn in self._conns:
+                    self._reply(self._conns[conn], rid, {"tick": self.tick})
+
+    def _drop_tick_request(self, s: Session, err: AwpError) -> None:
+        """Answer a session's pending world.tick with `err`; nothing advanced for it."""
+        if s.tick_request is None:
+            return
+        conn, rid, _ = s.tick_request
+        s.tick_request = None
+        if conn in self._conns:
+            self._send(self._conns[conn], jsonrpc.error(rid, err))
 
     def _advance_tick(self, now: int) -> None:
         """One advance: statuses and events, then a frame per per-tick channel (AWP-TIM-003)."""
@@ -1364,6 +1516,7 @@ class World:
                 if a.state is ActionState.ACCEPTED:
                     self._execute(s, a, now)
         self.arm.step(self.config.tick_ms / 1000)
+        self.gripper.step(self.config.tick_ms / 1000)
         self._monitor_envelope(now)
         for s in list(self.sessions.values()):
             self._update_actions(s, now)
@@ -1374,13 +1527,13 @@ class World:
 
     # ================================================================ frames and telemetry
 
-    def _readable(self, embodiment: str | None, consumes: frozenset[str]) -> set[str]:
-        """Channels the session may read: its embodiment's (every channel for an observer), and
+    def _readable(self, embodiments: list[str], consumes: frozenset[str]) -> set[str]:
+        """Channels the session may read: its embodiments' (every channel for an observer), and
         only in modalities the agent declared (AWP-AGM-001)."""
         names = (
-            set(self._channels)
-            if embodiment is None
-            else set(self.manifest["embodiments"][0]["channels"])
+            {n for e in embodiments for n in self._embodiments[e]["channels"]}
+            if embodiments
+            else set(self._channels)
         )
         return {
             n for n in names if n in self._channels and self._channels[n]["modality"] in consumes
@@ -1416,12 +1569,12 @@ class World:
             "channels": [g.to_wire() for g in s.grants.values()],
             "action_types": s.action_types,
             "admin": s.admin,
-            "envelopes": [self.config.envelope] if s.embodiment else [],
+            "envelopes": [self.config.envelope] if EMBODIMENT in s.embodiments else [],
         }
 
-    def _may_grant_admin(self, op: str, embodiment: str | None) -> bool:
-        if op == "tick":
-            return self.lockstep and embodiment is not None
+    def _may_grant_admin(self, op: str, embodiments: list[str]) -> bool:
+        if op == "tick":  # the barrier needs no grant (AWP-TIM-012)
+            return self.lockstep and bool(embodiments) and not self.barrier
         if op in ("reset", "restore"):  # at most one session at a time (AWP-PRM-005)
             if op == "restore" and not self.config.has("sim"):
                 return False
@@ -1438,8 +1591,24 @@ class World:
                 ],
                 "v_mps": [round(v, 6) for v in arm.velocity],
             }
+        elif channel == "gripper_state":
+            gripper = self.gripper
+            moving = next(
+                (
+                    a
+                    for other in self._bound[GRIPPER]
+                    for a in other.running.values()
+                    if a.embodiment == GRIPPER
+                ),
+                None,
+            )
+            body = {
+                "phase": str(gripper.phase),
+                "width_m": round(gripper.width_m, 6),
+                "action_id": moving.action_id if moving else None,
+            }
         else:
-            holder = self._holder
+            holder = self._holder(EMBODIMENT)
             running = holder.running.get("arm_motion") if holder else None
             body = {
                 "phase": str(arm.phase),
@@ -1594,7 +1763,7 @@ class World:
                     s.degraded_reported = True
                     self._event(s, "channel_degraded", now, {"channel": g.name})  # AWP-SAF-009
         if away > self.config.reconnect_window_ms * MS:
-            if s.embodiment is not None and not s.safe_state and not self.lockstep:
+            if s.embodiments and not s.safe_state and not self.lockstep:
                 self._enter_safe_state(s, now)  # AWP-SES-005
             self._close_session(s, now, "window_expired")
 
@@ -1610,10 +1779,10 @@ class World:
             if a.state is ActionState.EXECUTING and a.failing_with is None:
                 a.cancel_started_ns = now
                 self._transition(s, a, ActionState.CANCELLING, now, reason="session_closed")
-                self.arm.stop()
+                self._body(a.embodiment).stop()
         if self.lockstep or s.conn is None:
-            self.arm.halt()  # no simulated time will pass for the abort to run in
             for a in list(s.running.values()):
+                self._body(a.embodiment).halt()  # no simulated time will pass for the abort
                 state = ActionState.FAILED if a.failing_with else ActionState.CANCELLED
                 why = a.failing_with or a.cancel_reason
                 self._finish(s, a, state, now, reason=why, aborted=True)
@@ -1627,8 +1796,9 @@ class World:
             if conn in self._conns:
                 self._send(self._conns[conn], jsonrpc.result(rid, {}))
         s.closing.clear()
-        if self._holder is s:
-            self._holder = None
+        for e in s.embodiments:
+            self._bound[e].remove(s)
+        self._drop_tick_request(s, AwpError(ErrorCode.SESSION_EXPIRED, "the session closed"))
         self.sessions.pop(s.id, None)
         self._tokens.pop(s.token, None)
         self._closed_tokens[s.token] = None
@@ -1639,14 +1809,18 @@ class World:
         s.conn = None
         if self._audit is not None:
             self._audit.close(s.id)
+        if self.barrier:
+            self._run_barrier(now)  # it may have been the last session the barrier waited for
 
 
 def encode_state(state: dict[str, Any]) -> dict[str, Any]:
     """`World.world_state()` as JSON, for replay bundles."""
     arm = {f.name: getattr(state["arm"], f.name) for f in fields(Arm)}
+    gripper = {f.name: getattr(state["gripper"], f.name) for f in fields(Gripper)}
     version, internal, gauss = state["rng"]
     return {
         "arm": json.loads(json.dumps(arm)),
+        "gripper": json.loads(json.dumps(gripper)),
         "tick": state["tick"],
         "rng": [version, list(internal), gauss],
     }
@@ -1658,8 +1832,15 @@ def decode_state(data: dict[str, Any]) -> dict[str, Any]:
 
     arm = {k: tuples(v) for k, v in data["arm"].items()}
     arm["phase"] = Phase(arm["phase"])
+    gripper = dict(data["gripper"])
+    gripper["phase"] = Phase(gripper["phase"])
     version, internal, gauss = data["rng"]
-    return {"arm": Arm(**arm), "tick": data["tick"], "rng": (version, tuple(internal), gauss)}
+    return {
+        "arm": Arm(**arm),
+        "gripper": Gripper(**gripper),
+        "tick": data["tick"],
+        "rng": (version, tuple(internal), gauss),
+    }
 
 
 def encode_config(config: WorldConfig) -> dict[str, Any]:

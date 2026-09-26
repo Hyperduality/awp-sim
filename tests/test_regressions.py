@@ -97,6 +97,19 @@ def test_lockstep_replace_preempts_only_when_it_begins_executing():
     assert a.client.actions[replacing].state == "executing"
 
 
+def test_an_observer_closing_in_lockstep_leaves_the_holders_move_running():
+    net = make_net(mode="lockstep")
+    a = net.agent(heartbeat_ms=None)
+    a.open(mode="lockstep", embodiment="arm_01")
+    observer = net.agent("observer", heartbeat_ms=None)
+    observer.open(mode="lockstep")
+    move = a.submit("move_to_pose", FAR)
+    a.call(a.client.advance(count=3))
+    observer.call(observer.client.close())
+    a.call(a.client.advance())
+    assert a.client.actions[move].state == "executing"
+
+
 def test_a_deadline_abort_is_bounded_by_max_abort_ms():
     net = make_net(max_duration_ms=100)
     a = streaming_agent(net)
