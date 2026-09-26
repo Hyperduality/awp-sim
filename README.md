@@ -1,6 +1,6 @@
 # awp-sim
 
-The reference world for the [Agent World Protocol](https://www.agentworldprotocol.com). It has one simulated arm and runs in either time model. It exists to exercise the protocol, not to model physics.
+The reference world for the [Agent World Protocol](https://www.agentworldprotocol.com). It has a simulated arm, optionally a gripper, and runs in either time model. It exists to exercise the protocol, not to model physics.
 
 It is built from these parts:
 
@@ -27,13 +27,13 @@ The world is **Core World: AWP-conformant against 0.1-draft.9** in both time mod
 
 | Implemented | Not implemented |
 |---|---|
-| Lockstep (`on_tick`, `any_session`) and streaming | `barrier` tick authority |
+| Lockstep (`on_tick`; `any_session`, or `barrier` with the gripper) and streaming | Grant expiry |
 | Inline and `ws` stream bindings | Other stream bindings (`webrtc`, `webtransport`, `shm`, `grpc`) |
-| Full action lifecycle; preemption (`replace`, `queue`, `reject`, `blend`); idempotency | Grant expiry |
-| Watchdog and safe state, heartbeats, resumption with replay and acknowledgement | Multi-bind and shared control (one embodiment) |
+| Full action lifecycle; preemption (`replace`, `queue`, `reject`, `blend`); idempotency | |
+| Watchdog and safe state, heartbeats, resumption with replay and acknowledgement | |
 | Spatial, velocity, and rate envelopes (`command_check`), monitored during execution | Robotics profile (a simulated arm proves nothing physical) |
 | Audit log with redaction and hash chain; e-stop; `world.reset` | |
-| Beyond Core (`--features`): task, approval and standing approvals, transfer, seeding, snapshots, replay bundles, a servo command channel | |
+| Beyond Core (`--features`): task, approval and standing approvals, transfer, seeding, snapshots, replay bundles, a servo command channel, a gripper | |
 
 ## Quickstart
 
@@ -56,10 +56,20 @@ Run the failure scenarios:
 awp-sim scenarios --out traces
 ```
 
+## The gripper
+
+`--features gripper` adds `gripper_01`, with one action type, `gripper_move { width_m }`, and one channel, `gripper_state`.
+
+- It shares the multi-bind group `cell` with the arm. A session binds both with `embodiments: ["arm_01", "gripper_01"]`, and its submissions then name `embodiment_id`.
+- It is shared: several sessions can bind it at once. Whichever submits a `gripper_move` first has the gripper until that action ends. Meanwhile the others' submissions are refused with `AWP_BUSY`.
+- In lockstep, the tick authority becomes `barrier`. The world advances once every session bound to an embodiment has a `world.tick` pending, and answers each call after its `count` advances.
+  - A second call on the connection whose call is pending is refused. A call from a new connection replaces the pending one.
+  - A reset or restore answers pending calls with `AWP_TICK_MISMATCH`.
+
 ## Layout
 
 ```
-src/awp_sim/        world engine, arm, server, audit log, loopback, scenarios, replay, CLI
+src/awp_sim/        world engine, arm and gripper, server, audit log, loopback, scenarios, replay, CLI
 tests/              engine, server, feature, scenario, and evidence tests
 conformance/        conformance reports and evidence
 spec/               agent-world-protocol, pinned at spec-v0.1-draft.9

@@ -10,14 +10,21 @@ from . import __version__
 Mode = Literal["lockstep", "streaming"]
 
 EMBODIMENT = "arm_01"
+GRIPPER = "gripper_01"
+MULTI_BIND_GROUP = "cell"
 HOME: tuple[float, float, float] = (0.0, 0.0, 0.4)
 PARK: tuple[float, float, float] = (0.0, 0.0, 0.25)
 SERVO_CHANNEL = "servo_arm"
+ARBITRATION = (
+    "first-come: while one session's gripper_move is pending or executing, "
+    "the others' are refused with AWP_BUSY"
+)
 
 # Beyond Core, each off by default: task (AWP-TSK), approval of `park` (AWP-APR), blend preemption
 # (AWP-PRE-004), embodiment transfer (AWP-EMB-003), sim-profile seeding, snapshots, and replay
-# (AWP-REP, lockstep), and a servo command channel (AWP-CMD, streaming).
-FEATURES = frozenset({"task", "approval", "blend", "transfer", "sim", "servo"})
+# (AWP-REP, lockstep), a servo command channel (AWP-CMD, streaming), and a shared gripper that one
+# session may bind with the arm (AWP-EMB-005, AWP-MA-003), under the barrier in lockstep.
+FEATURES = frozenset({"task", "approval", "blend", "transfer", "sim", "servo", "gripper"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +52,8 @@ class WorldConfig:
     approval_timeout_ms: int = 60000
     servo_watchdog_ms: int = 200
     servo_hz: float = 200.0
+    gripper_speed_mps: float = 0.05
+    gripper_max_width_m: float = 0.08
     extensions: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -210,9 +219,64 @@ class WorldConfig:
                     "description": "Follow end-effector velocity setpoints on servo_arm.",
                 }
             )
+        if self.has("gripper"):
+            manifest["embodiments"][0]["multi_bind_group"] = MULTI_BIND_GROUP
+            manifest["embodiments"].append(
+                {
+                    "id": GRIPPER,
+                    "kind": "gripper",
+                    "shared_control": True,
+                    "arbitration": ARBITRATION,
+                    "multi_bind_group": MULTI_BIND_GROUP,
+                    "action_types": ["gripper_move"],
+                    "channels": ["gripper_state"],
+                }
+            )
+            manifest["observation_channels"].append(
+                {
+                    "id": "gripper_state",
+                    "modality": "text/event+json",
+                    "rate_hz": None if lockstep else self.state_hz,
+                    "loss_class": "reliable",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "phase": {"enum": ["idle", "moving"]},
+                            "width_m": {"type": "number"},
+                            "action_id": {"type": ["string", "null"]},
+                        },
+                        "required": ["phase", "width_m", "action_id"],
+                    },
+                }
+            )
+            manifest["action_schemas"].append(
+                {
+                    "type": "gripper_move",
+                    "params_schema": {
+                        "type": "object",
+                        "properties": {
+                            "width_m": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": self.gripper_max_width_m,
+                            }
+                        },
+                        "required": ["width_m"],
+                        "additionalProperties": False,
+                    },
+                    "duration": "extended",
+                    "preemption": ["replace", "queue", "reject"],
+                    "concurrency_group": "gripper",
+                    "max_queue": 4,
+                    "max_abort_ms": self.max_abort_ms,
+                    "max_duration_ms": self.max_duration_ms,
+                    "description": "Open or close the fingers to a width.",
+                }
+            )
         if lockstep:
             manifest["tick_policy"] = "on_tick"
-            manifest["tick_authority"] = "any_session"
+            # Several lockstep sessions can be bound at once with the gripper (AWP-MA-005).
+            manifest["tick_authority"] = "barrier" if self.has("gripper") else "any_session"
         if self.extensions:
             manifest["extensions"] = self.extensions
         return manifest

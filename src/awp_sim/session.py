@@ -34,8 +34,10 @@ class Action:
     content: dict[str, Any]
     decl: dict[str, Any]
     received_ns: int
+    embodiment: str
     deadline_ns: int | None = None
     target: Vec3 | None = None
+    width_m: float | None = None
     v_max: float = 0.0
     state: ActionState = ActionState.SUBMITTED
     status: dict[str, Any] = field(default_factory=dict)
@@ -116,7 +118,7 @@ class Session:
     id: str
     token: str
     mode: str
-    embodiment: str | None
+    embodiments: list[str]  # empty for an observer session (AWP-EMB-004)
     origin_ns: int
     clock_anchor: str
     conn: Hashable | None
@@ -146,6 +148,7 @@ class Session:
     telemetry: Telemetry = field(default_factory=Telemetry)
     next_channel_id: int = 1
     standing: list[Standing] = field(default_factory=list)
+    tick_request: tuple[Hashable, Any, int] | None = None  # (conn, id, advances) at the barrier
 
     def next_seq(self) -> int:
         self.seq += 1
