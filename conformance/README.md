@@ -1,13 +1,13 @@
 # Conformance
 
-![AWP: Core World, AWP-conformant against 0.1-draft.9](https://img.shields.io/badge/AWP-Core_World%2C_conformant_0.1--draft.9-555)
+![AWP: Core World, AWP-conformant against 0.1-draft.10](https://img.shields.io/badge/AWP-Core_World%2C_conformant_0.1--draft.10-555)
 
 | Class | Configuration | Claim | Report |
 |---|---|---|---|
-| Core World | `awp-sim serve --mode lockstep` | Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`core-world-lockstep.json`](core-world-lockstep.json) |
-| Core World | `awp-sim serve` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`core-world-streaming.json`](core-world-streaming.json) |
-| Core World + sim | `awp-sim serve --mode lockstep --features task,approval,blend,transfer,sim,gripper --approver-token awp-sim-approver` | Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`features-lockstep.json`](features-lockstep.json) |
-| Core World | `awp-sim serve --features task,approval,blend,transfer,servo,gripper --stream-binding ws --approver-token awp-sim-approver --approval-timeout-ms 5000` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`features-streaming.json`](features-streaming.json) |
+| Core World | `awp-sim serve --mode lockstep` | Core World (lockstep): AWP-conformant against 0.1-draft.10 (awp-conformance 0.1.0a6) | [`core-world-lockstep.json`](core-world-lockstep.json) |
+| Core World | `awp-sim serve` | Core World (streaming): AWP-conformant against 0.1-draft.10 (awp-conformance 0.1.0a6) | [`core-world-streaming.json`](core-world-streaming.json) |
+| Core World + sim | `awp-sim serve --mode lockstep --features task,approval,blend,transfer,sim,gripper --approver-token awp-sim-approver` | Core World + sim (lockstep): AWP-conformant against 0.1-draft.10 (awp-conformance 0.1.0a6) | [`features-lockstep.json`](features-lockstep.json) |
+| Core World | `awp-sim serve --features task,approval,blend,transfer,servo,gripper --stream-binding ws --approver-token awp-sim-approver --approval-timeout-ms 5000` | Core World (streaming): AWP-conformant against 0.1-draft.10 (awp-conformance 0.1.0a6) | [`features-streaming.json`](features-streaming.json) |
 
 The reports come from awp-conformance 0.1.0a6 run against awp-sim 0.1.0a6. None has a failure or anything untested. The evidence for their `manual` rows follows (AWP-CNF-005).
 
@@ -56,7 +56,7 @@ uv run pytest tests/test_evidence.py tests/test_features.py
 
 ### AWP-DAT-008: frame test vectors
 
-awp-sim encodes and decodes frames with awp-python's `awp.frames`. That decoder's evidence is `test_vectors` in awp-python's [`tests/test_frames.py`](https://github.com/Hyperduality/awp-python/blob/main/tests/test_frames.py), which runs it over every vector in `schemas/test-vectors/frames.json` at `spec-v0.1-draft.9`:
+awp-sim encodes and decodes frames with awp-python's `awp.frames`. That decoder's evidence is `test_vectors` in awp-python's [`tests/test_frames.py`](https://github.com/Hyperduality/awp-python/blob/main/tests/test_frames.py), which runs it over every vector in `schemas/test-vectors/frames.json` at `spec-v0.1-draft.10`:
 
 - the 10 valid vectors decode to their listed fields;
 - the 10 marked `expect_error` are rejected with their listed error.
@@ -92,6 +92,6 @@ The specification's schemas define every other field. `test_world_defined_fields
 
 ### AWP-VER-009: the draft revision is named
 
-- The [README](../README.md) and the [awp-sim page](https://www.agentworldprotocol.com/adapters/awp-sim) name `0.1-draft.9`.
-- The `spec/` submodule is pinned at the tag `spec-v0.1-draft.9`.
-- Each report records `"specification": "0.1-draft.9"`, and its claim names the revision.
+- The [README](../README.md) and the [awp-sim page](https://www.agentworldprotocol.com/adapters/awp-sim) name `0.1-draft.10`.
+- The `spec/` submodule is pinned at the tag `spec-v0.1-draft.10`.
+- Each report records `"specification": "0.1-draft.10"`, and its claim names the revision.
