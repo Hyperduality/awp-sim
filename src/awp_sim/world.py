@@ -1461,12 +1461,12 @@ class World:
             self._reply(c, rid, {"tick": self.tick})
             return
         if s.tick_request is not None:
-            raise AwpError(ErrorCode.INVALID_REQUEST, "this session's world.tick is pending")
+            raise AwpError(ErrorCode.BUSY, "this session's world.tick is pending")  # AWP-TIM-014
         s.tick_request = (rid, count)
         self._run_barrier(now)
 
     def _run_barrier(self, now: int) -> None:
-        """AWP-TIM-012: advance while every bound, non-observer session has a world.tick pending,
+        """AWP-TIM-014: advance while every bound, non-observer session has a world.tick pending,
         and answer each once its `count` advances are made."""
         while True:
             bound = [s for s in self.sessions.values() if s.embodiments]

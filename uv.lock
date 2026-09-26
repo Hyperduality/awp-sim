@@ -81,8 +81,8 @@ wheels = [
 
 [[package]]
 name = "awp-python"
-version = "0.1.0a4"
-source = { git = "https://github.com/Hyperduality/awp-python?branch=main#27e619c8b36e2f157d563d602a3fa47560c02cd5" }
+version = "0.1.0a5"
+source = { git = "https://github.com/Hyperduality/awp-python?branch=main#ee88472d7fb779856d62a2e51cfaac0c6b861072" }
 dependencies = [
     { name = "jsonschema" },
     { name = "websockets" },

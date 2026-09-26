@@ -234,9 +234,10 @@ def test_the_world_advances_once_every_bound_session_has_ticked():
     observer = agent(net, "observer", mode="lockstep", subscribe=["proprio"])
     grip = b.submit("gripper_move", CLOSED)
     first = a.client.advance()
-    assert pending(a, first)  # AWP-TIM-012: a call advances nothing on its own
+    assert pending(a, first)  # AWP-TIM-014: a call advances nothing on its own
     assert net.world.tick == 0
-    assert refused(lambda: a.call(a.client.advance())) == ErrorCode.INVALID_REQUEST
+    again = a.client.request("world.tick", {"expected_tick": 0})  # past the client's own check
+    assert refused(lambda: a.call(again)) == ErrorCode.BUSY  # AWP-TIM-014
     assert refused(lambda: observer.call(observer.client.advance())) == (
         ErrorCode.TICK_NOT_AUTHORIZED
     )
