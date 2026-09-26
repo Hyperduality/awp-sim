@@ -71,13 +71,13 @@ jobs:
       - name: serve awp-sim and run the suite against it
         run: |
           mkdir -p run && cd run
-          curl -fsSL https://raw.githubusercontent.com/Hyperduality/awp-conformance/v0.1.0a5/fixtures/${{ matrix.fixture }} \
+          curl -fsSL https://raw.githubusercontent.com/Hyperduality/awp-conformance/v0.1.0a6/fixtures/${{ matrix.fixture }} \
             | sed 's#"audit_dir": "awp-audit"#"audit_dir": "'"$PWD"'/awp-audit"#' > fixture.json
           uv run awp-sim serve --mode ${{ matrix.mode }} --port 8710 ${{ matrix.serve }} \
             --watchdog-ms 800 --heartbeat-ms 500 --reconnect-window-ms 4000 &
           export AWP_SIM_PID=$!
           sleep 2
-          uvx --prerelease allow --from awp-conformance==0.1.0a5 awp-conformance world \
+          uvx --prerelease allow --from awp-conformance==0.1.0a6 awp-conformance world \
             ws://127.0.0.1:8710 --fixture fixture.json ${{ matrix.claim }} --out report
       - name: the claim is AWP-conformant
         run: |

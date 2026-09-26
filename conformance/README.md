@@ -4,12 +4,12 @@
 
 | Class | Configuration | Claim | Report |
 |---|---|---|---|
-| Core World | `awp-sim serve --mode lockstep` | Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`core-world-lockstep.json`](core-world-lockstep.json) |
-| Core World | `awp-sim serve` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`core-world-streaming.json`](core-world-streaming.json) |
-| Core World + sim | `awp-sim serve --mode lockstep --features task,approval,blend,transfer,sim,gripper --approver-token awp-sim-approver` | Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`features-lockstep.json`](features-lockstep.json) |
-| Core World | `awp-sim serve --features task,approval,blend,transfer,servo,gripper --stream-binding ws --approver-token awp-sim-approver --approval-timeout-ms 5000` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`features-streaming.json`](features-streaming.json) |
+| Core World | `awp-sim serve --mode lockstep` | Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`core-world-lockstep.json`](core-world-lockstep.json) |
+| Core World | `awp-sim serve` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`core-world-streaming.json`](core-world-streaming.json) |
+| Core World + sim | `awp-sim serve --mode lockstep --features task,approval,blend,transfer,sim,gripper --approver-token awp-sim-approver` | Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`features-lockstep.json`](features-lockstep.json) |
+| Core World | `awp-sim serve --features task,approval,blend,transfer,servo,gripper --stream-binding ws --approver-token awp-sim-approver --approval-timeout-ms 5000` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6) | [`features-streaming.json`](features-streaming.json) |
 
-The reports come from awp-conformance 0.1.0a5 run against awp-sim 0.1.0a5. None has a failure or anything untested. The evidence for their `manual` rows follows (AWP-CNF-005).
+The reports come from awp-conformance 0.1.0a6 run against awp-sim 0.1.0a6. None has a failure or anything untested. The evidence for their `manual` rows follows (AWP-CNF-005).
 
 Between them, the two feature configurations cover every feature awp-sim offers. They are separate runs because `sim` is lockstep-only and `servo` is streaming-only. The streaming one shortens `approval_timeout_ms` so the suite can wait out a timeout (AWP-APR-003).
 
@@ -17,7 +17,7 @@ Between them, the two feature configurations cover every feature awp-sim offers.
 
 ```bash
 pip install --pre awp-sim awp-conformance
-curl -LO https://raw.githubusercontent.com/Hyperduality/awp-conformance/v0.1.0a5/fixtures/awp-sim.json
+curl -LO https://raw.githubusercontent.com/Hyperduality/awp-conformance/v0.1.0a6/fixtures/awp-sim.json
 awp-sim serve --mode lockstep &          # or `awp-sim serve` for streaming
 export AWP_SIM_PID=$!
 awp-conformance world ws://127.0.0.1:8710 --fixture awp-sim.json --out report/
