@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a6"
+    "version": "0.1.0a7"
   },
-  "specification": "0.1-draft.9",
+  "specification": "0.1-draft.10",
   "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-26T18:47:11Z",
+  "generated": "2026-09-26T22:32:25Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6)",
+    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.10 (awp-conformance 0.1.0a7)",
     "classes": [
       "Core World"
     ],
@@ -26,8 +26,8 @@
     ],
     "counts": {
       "manual": 4,
-      "n/a": 100,
-      "pass": 123,
+      "n/a": 103,
+      "pass": 124,
       "untestable": 10
     }
   },
@@ -294,7 +294,7 @@
       "id": "AWP-CLK-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "19 check(s): lockstep/audit-log, lockstep/connection-without-session, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
+      "detail": "18 check(s): lockstep/audit-log, lockstep/connection-without-session, lockstep/determinism, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
     },
     {
       "id": "AWP-CLK-008",
@@ -353,6 +353,12 @@
     {
       "id": "AWP-CMD-008",
       "level": "MUST",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
+      "id": "AWP-CMD-009",
+      "level": "SHOULD",
       "outcome": "n/a",
       "detail": "applies to streaming only; tested lockstep"
     },
@@ -595,6 +601,12 @@
       "level": "MUST",
       "outcome": "pass",
       "detail": "38 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+    },
+    {
+      "id": "AWP-EVT-004",
+      "level": "MUST",
+      "outcome": "pass",
+      "detail": "1 check(s): lockstep/estop"
     },
     {
       "id": "AWP-GUI-001",
@@ -981,10 +993,16 @@
       "detail": "applies to streaming only; tested lockstep"
     },
     {
+      "id": "AWP-ROB-008",
+      "level": "SHOULD",
+      "outcome": "n/a",
+      "detail": "applies to streaming only; tested lockstep"
+    },
+    {
       "id": "AWP-SAF-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "17 check(s): lockstep/audit-log, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
+      "detail": "16 check(s): lockstep/audit-log, lockstep/determinism, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
     },
     {
       "id": "AWP-SAF-002",
@@ -1269,6 +1287,12 @@
       "detail": "3 check(s): lockstep/lockstep-clock"
     },
     {
+      "id": "AWP-TIM-014",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "tick_authority barrier: no"
+    },
+    {
       "id": "AWP-TRN-001",
       "level": "MUST",
       "outcome": "pass",
@@ -1457,7 +1481,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a6",
+    "version": "0.1.0a7",
     "vendor": "hyperduality"
   },
   "tests": [
@@ -1648,6 +1672,10 @@
     {
       "test": "lockstep/tick-authority",
       "outcome": "skipped: no second session can bind an embodiment"
+    },
+    {
+      "test": "lockstep/barrier-calls",
+      "outcome": "skipped: tick_authority is not barrier"
     },
     {
       "test": "lockstep/resume-replay",
