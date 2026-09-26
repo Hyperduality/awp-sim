@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "awp-sim"
-version = "0.1.0a4"
+version = "0.1.0a5"
 description = "Agent World Protocol reference world: a simulated arm in lockstep and streaming."
 readme = "README.md"
 license = "Apache-2.0"

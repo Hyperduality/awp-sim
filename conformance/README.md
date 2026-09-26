@@ -4,12 +4,12 @@
 
 | Class | Configuration | Claim | Report |
 |---|---|---|---|
-| Core World | `awp-sim serve --mode lockstep` | Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a4) | [`core-world-lockstep.json`](core-world-lockstep.json) |
-| Core World | `awp-sim serve` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a4) | [`core-world-streaming.json`](core-world-streaming.json) |
-| Core World + sim | `awp-sim serve --mode lockstep --features task,approval,blend,transfer,sim --approver-token awp-sim-approver` | Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a4) | [`features-lockstep.json`](features-lockstep.json) |
-| Core World | `awp-sim serve --features task,approval,blend,transfer,servo --stream-binding ws --approver-token awp-sim-approver --approval-timeout-ms 5000` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a4) | [`features-streaming.json`](features-streaming.json) |
+| Core World | `awp-sim serve --mode lockstep` | Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`core-world-lockstep.json`](core-world-lockstep.json) |
+| Core World | `awp-sim serve` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`core-world-streaming.json`](core-world-streaming.json) |
+| Core World + sim | `awp-sim serve --mode lockstep --features task,approval,blend,transfer,sim,gripper --approver-token awp-sim-approver` | Core World + sim (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`features-lockstep.json`](features-lockstep.json) |
+| Core World | `awp-sim serve --features task,approval,blend,transfer,servo,gripper --stream-binding ws --approver-token awp-sim-approver --approval-timeout-ms 5000` | Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5) | [`features-streaming.json`](features-streaming.json) |
 
-The reports come from awp-conformance 0.1.0a4 run against awp-sim 0.1.0a4. None has a failure or anything untested. The evidence for their `manual` rows follows (AWP-CNF-005).
+The reports come from awp-conformance 0.1.0a5 run against awp-sim 0.1.0a5. None has a failure or anything untested. The evidence for their `manual` rows follows (AWP-CNF-005).
 
 Between them, the two feature configurations cover every feature awp-sim offers. They are separate runs because `sim` is lockstep-only and `servo` is streaming-only. The streaming one shortens `approval_timeout_ms` so the suite can wait out a timeout (AWP-APR-003).
 
@@ -17,7 +17,7 @@ Between them, the two feature configurations cover every feature awp-sim offers.
 
 ```bash
 pip install --pre awp-sim awp-conformance
-curl -LO https://raw.githubusercontent.com/Hyperduality/awp-conformance/v0.1.0a4/fixtures/awp-sim.json
+curl -LO https://raw.githubusercontent.com/Hyperduality/awp-conformance/v0.1.0a5/fixtures/awp-sim.json
 awp-sim serve --mode lockstep &          # or `awp-sim serve` for streaming
 export AWP_SIM_PID=$!
 awp-conformance world ws://127.0.0.1:8710 --fixture awp-sim.json --out report/
@@ -85,7 +85,8 @@ The fields awp-sim defines, reviewed:
 | `v_mps` | `proprio` payload; `servo_arm` setpoints | m/s |
 | `target_m` | `arm_state` payload | m |
 | `max_velocity_mps` | `move_to_pose` params | m/s |
-| `phase`, `action_id` | `arm_state` payload | not physical |
+| `width_m` | `gripper_state` payload; `gripper_move` params | m |
+| `phase`, `action_id` | `arm_state` and `gripper_state` payloads | not physical |
 
 The specification's schemas define every other field. `test_world_defined_fields_carry_si_suffixes` collects every action parameter, channel schema field, and payload field across every feature. It fails on any field that lacks a unit suffix and has not been reviewed as non-physical.
 

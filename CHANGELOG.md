@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0a5
+
+Targets specification revision `0.1-draft.9`.
+
+- `--features gripper` adds a second embodiment, `gripper_01`. One session can bind it with the arm, or several sessions can share it. In lockstep, it makes the tick authority `barrier`.
+- An observer session closing in lockstep no longer halts the arm.
+- The reports come from awp-conformance 0.1.0a5, and the feature configurations include the gripper.
+
 ## 0.1.0a4
 
 Targets specification revision `0.1-draft.9`.
