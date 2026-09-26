@@ -5,25 +5,18 @@ from __future__ import annotations
 import asyncio
 import json
 
-import pytest
 from awp.aio import AsyncClient
 from awp.client import ClientConnection, FrameReceived
-from awp.errors import AwpError, ErrorCode
+from awp.errors import ErrorCode
 
 from awp_sim.config import WorldConfig
 from awp_sim.server import Server, _Outbox
 from awp_sim.world import Close, Send, World
 
-from .helpers import make_net, pose, statuses
+from .helpers import make_net, pose, refused, statuses
 
 FAR = pose(0.3, 0.2, 0.5)
 AGENT = {"name": "r", "version": "1", "vendor": "tests"}
-
-
-def refused(fn):
-    with pytest.raises(AwpError) as exc:
-        fn()
-    return exc.value.code
 
 
 def streaming_agent(net, **kw):

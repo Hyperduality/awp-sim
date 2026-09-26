@@ -13,6 +13,11 @@ def test_manifest(capsys):
     assert schema.errors("world-manifest", manifest, sender=True) == []
 
 
+def test_manifest_refuses_an_unknown_feature(capsys):
+    assert main(["manifest", "--features", "bogus"]) == 2
+    assert "unknown features ['bogus']" in capsys.readouterr().err
+
+
 def test_scenarios_list_run_and_write(capsys, tmp_path):
     assert main(["scenarios", "--list"]) == 0
     assert "quiet-agent" in capsys.readouterr().out

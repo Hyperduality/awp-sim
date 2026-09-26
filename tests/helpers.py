@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
+import pytest
 from awp import schema
 from awp.client import ActionUpdated, WorldEvent
+from awp.errors import AwpError
 
 from awp_sim.config import WorldConfig
 from awp_sim.loopback import Loopback, LoopbackAgent
@@ -15,6 +18,13 @@ FIXED_WALL = datetime(2026, 9, 23, 12, 0, tzinfo=UTC)
 
 def make_net(**config: Any) -> Loopback:
     return Loopback(World(WorldConfig(**config), wall_clock=lambda: FIXED_WALL))
+
+
+def refused(fn: Callable[[], object]) -> int:
+    """The error code `fn` is refused with."""
+    with pytest.raises(AwpError) as exc:
+        fn()
+    return exc.value.code
 
 
 def pose(x: float, y: float, z: float) -> dict[str, Any]:

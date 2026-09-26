@@ -93,7 +93,11 @@ def _parser() -> argparse.ArgumentParser:
 
     m = sub.add_parser("manifest", help="print the world manifest")
     m.add_argument("--mode", choices=["streaming", "lockstep"], default="streaming")
-    m.add_argument("--features", default="")
+    m.add_argument(
+        "--features",
+        default="",
+        help=f"comma-separated features beyond Core: {', '.join(sorted(FEATURES))}",
+    )
     return p
 
 
@@ -101,7 +105,12 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "manifest":
         features = frozenset(f for f in args.features.split(",") if f)
-        print(json.dumps(WorldConfig(mode=args.mode, features=features).manifest(), indent=2))
+        try:
+            config = WorldConfig(mode=args.mode, features=features)
+        except ValueError as err:
+            print(f"awp-sim: {err}", file=sys.stderr)
+            return 2
+        print(json.dumps(config.manifest(), indent=2))
         return 0
     if args.command == "scenarios":
         return _scenarios(args)

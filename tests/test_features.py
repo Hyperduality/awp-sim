@@ -6,21 +6,15 @@ import json
 
 import pytest
 from awp.client import ApprovalRequested, FrameReceived, Telemetry
-from awp.errors import AwpError, ErrorCode
+from awp.errors import ErrorCode
 
-from .helpers import events, make_net, pose, statuses
+from .helpers import events, make_net, pose, refused, statuses
 
 MS = 1_000_000
 
 FAR = pose(0.4, 0.4, 0.6)
 NEAR = pose(-0.3, 0.2, 0.3)
 TASK = {"content": [{"type": "text", "text": "Park the arm."}]}
-
-
-def refused(fn):
-    with pytest.raises(AwpError) as exc:
-        fn()
-    return exc.value.code
 
 
 def world(*features, mode="streaming", **config):
@@ -317,6 +311,17 @@ def test_setpoints_drive_the_arm_until_they_stop():
     assert statuses(a, action)[-1] == ("failed", "watchdog")
     net.advance(1000)
     assert any("command_latency_ns" in e.params for e in a.of(Telemetry))
+
+
+def test_the_command_channel_survives_a_resume():
+    net, a = servo_net()
+    a.drop()
+    a.connect()
+    a.call(a.client.initialize())
+    a.call(a.client.resume())
+    assert "servo_arm" in a.client.channels  # AWP-CMD-002
+    session = next(iter(net.world.sessions.values()))
+    assert "servo_arm" in session.grants
 
 
 def test_frames_outside_the_envelope_or_the_action_are_dropped():

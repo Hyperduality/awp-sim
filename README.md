@@ -25,15 +25,21 @@ The world is **Core World: AWP-conformant against 0.1-draft.9** in both time mod
 - replay;
 - frame sequencing.
 
-| Implemented | Not implemented |
-|---|---|
-| Lockstep (`on_tick`; `any_session`, or `barrier` with the gripper) and streaming | Grant expiry |
-| Inline and `ws` stream bindings | Other stream bindings (`webrtc`, `webtransport`, `shm`, `grpc`) |
-| Full action lifecycle; preemption (`replace`, `queue`, `reject`, `blend`); idempotency | |
-| Watchdog and safe state, heartbeats, resumption with replay and acknowledgement | |
-| Spatial, velocity, and rate envelopes (`command_check`), monitored during execution | Robotics profile (a simulated arm proves nothing physical) |
-| Audit log with redaction and hash chain; e-stop; `world.reset` | |
-| Beyond Core (`--features`): task, approval and standing approvals, transfer, seeding, snapshots, replay bundles, a servo command channel, a gripper | |
+Implemented:
+
+- lockstep (`on_tick`; `any_session`, or `barrier` with the gripper) and streaming;
+- inline and `ws` stream bindings;
+- the full action lifecycle, preemption (`replace`, `queue`, `reject`, `blend`), and idempotency;
+- watchdog and safe state, heartbeats, and resumption with replay and acknowledgement;
+- spatial, velocity, and rate envelopes (`command_check`), monitored during execution;
+- the audit log with redaction and hash chain, the e-stop, and `world.reset`;
+- beyond Core (`--features`): task, approval and standing approvals, transfer, seeding, snapshots, replay bundles, a servo command channel, and a gripper.
+
+Not implemented:
+
+- grant expiry;
+- other stream bindings (`webrtc`, `webtransport`, `shm`, `grpc`);
+- the robotics profile (a simulated arm proves nothing physical).
 
 ## Quickstart
 
@@ -63,8 +69,8 @@ awp-sim scenarios --out traces
 - It shares the multi-bind group `cell` with the arm. A session binds both with `embodiments: ["arm_01", "gripper_01"]`, and its submissions then name `embodiment_id`.
 - It is shared: several sessions can bind it at once. Whichever submits a `gripper_move` first has the gripper until that action ends. Meanwhile the others' submissions are refused with `AWP_BUSY`.
 - In lockstep, the tick authority becomes `barrier`. The world advances once every session bound to an embodiment has a `world.tick` pending, and answers each call after its `count` advances.
-  - A second call on the connection whose call is pending is refused. A call from a new connection replaces the pending one.
-  - A reset or restore answers pending calls with `AWP_TICK_MISMATCH`.
+  - While a session's call is pending, a second one is refused. A call is lost with its connection, and the barrier then waits for a new one from the resumed session.
+  - A reset or restore refuses pending calls with `AWP_TICK_MISMATCH`.
 
 ## Layout
 
@@ -84,17 +90,9 @@ Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). Node 20+ is needed o
 git clone --recurse-submodules https://github.com/Hyperduality/awp-sim
 cd awp-sim
 uv sync
-uv run ruff check && uv run ruff format --check
-uv run mypy
-uv run pytest --cov
-uv run awp-sim scenarios --out traces && uv run python scripts/check_traces.py traces/*.jsonl
 ```
 
-The world tracks the draft revision of awp-python. To move to a new one:
-
-1. Check out its tag in `spec/`.
-2. Update the `awp-python` requirement.
-3. Fix whatever the tests report.
+[AGENTS.md](AGENTS.md) lists the checks and the steps for moving to a new draft revision and for releasing.
 
 ## License
 
