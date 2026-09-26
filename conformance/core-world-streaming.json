@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a4"
+    "version": "0.1.0a5"
   },
   "specification": "0.1-draft.9",
   "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-25T23:39:40Z",
+  "generated": "2026-09-26T14:41:36Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a4)",
+    "wording": "Core World (streaming): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5)",
     "classes": [
       "Core World"
     ],
@@ -1459,7 +1459,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a4",
+    "version": "0.1.0a5",
     "vendor": "hyperduality"
   },
   "tests": [
@@ -1617,6 +1617,14 @@
     },
     {
       "test": "streaming/isolation",
+      "outcome": "ran"
+    },
+    {
+      "test": "streaming/multi-bind",
+      "outcome": "skipped: no multi_bind_group has two embodiments"
+    },
+    {
+      "test": "streaming/embodiment-binding",
       "outcome": "ran"
     },
     {
