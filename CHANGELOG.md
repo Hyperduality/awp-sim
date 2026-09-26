@@ -9,6 +9,7 @@ Targets specification revision `0.1-draft.9`.
 - A resumed session keeps its command channel grant; resumption dropped it.
 - `awp-sim manifest` reports an unknown or unsupported feature as an error instead of a traceback.
 - A replay bundle from awp-sim 0.1.0a4 or earlier loads again, with the gripper fully open.
+- The reports come from awp-conformance 0.1.0a6.
 
 ## 0.1.0a5
 

@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a5"
+    "version": "0.1.0a6"
   },
   "specification": "0.1-draft.9",
   "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-26T14:39:49Z",
+  "generated": "2026-09-26T18:47:11Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a5)",
+    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.9 (awp-conformance 0.1.0a6)",
     "classes": [
       "Core World"
     ],
@@ -96,7 +96,7 @@
       "id": "AWP-AGM-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-AGM-002",
@@ -258,7 +258,7 @@
       "id": "AWP-CLK-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-CLK-002",
@@ -282,7 +282,7 @@
       "id": "AWP-CLK-005",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "51 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "51 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-CLK-006",
@@ -294,7 +294,7 @@
       "id": "AWP-CLK-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "18 check(s): lockstep/audit-log, lockstep/connection-without-session, lockstep/determinism, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
+      "detail": "19 check(s): lockstep/audit-log, lockstep/connection-without-session, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
     },
     {
       "id": "AWP-CLK-008",
@@ -396,7 +396,7 @@
       "id": "AWP-CTL-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "51 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "51 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-CTL-002",
@@ -408,7 +408,7 @@
       "id": "AWP-CTL-003",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-CTL-004",
@@ -426,7 +426,7 @@
       "id": "AWP-CTL-006",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "51 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "51 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-CTL-007",
@@ -438,13 +438,13 @@
       "id": "AWP-CTL-008",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "44 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "44 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-CTL-009",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "55 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "55 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-CTL-010",
@@ -474,13 +474,13 @@
       "id": "AWP-DAT-004",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-DAT-005",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-DAT-006",
@@ -492,7 +492,7 @@
       "id": "AWP-DAT-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-DAT-008",
@@ -516,7 +516,7 @@
       "id": "AWP-EMB-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "1 check(s): lockstep/open-refusals"
+      "detail": "1 check(s): lockstep/embodiment-binding"
     },
     {
       "id": "AWP-EMB-002",
@@ -594,7 +594,7 @@
       "id": "AWP-EVT-003",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "39 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "38 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-GUI-001",
@@ -702,13 +702,13 @@
       "id": "AWP-MA-003",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "1 check(s): lockstep/open-refusals"
+      "detail": "1 check(s): lockstep/embodiment-binding"
     },
     {
       "id": "AWP-MA-004",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "3 check(s): lockstep/isolation"
+      "detail": "2 check(s): lockstep/isolation"
     },
     {
       "id": "AWP-MA-005",
@@ -720,7 +720,7 @@
       "id": "AWP-MAN-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "52 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "52 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-MAN-002",
@@ -732,7 +732,7 @@
       "id": "AWP-MAN-003",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "3 check(s): lockstep/isolation, lockstep/manifest"
+      "detail": "2 check(s): lockstep/manifest"
     },
     {
       "id": "AWP-MAN-004",
@@ -762,7 +762,7 @@
       "id": "AWP-MOD-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-MOD-002",
@@ -780,7 +780,7 @@
       "id": "AWP-NEG-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "44 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "44 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-NEG-002",
@@ -804,13 +804,13 @@
       "id": "AWP-OBS-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-OBS-002",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-OBS-003",
@@ -822,13 +822,13 @@
       "id": "AWP-OBS-004",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-OBS-005",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "40 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-OBS-006",
@@ -918,7 +918,7 @@
       "id": "AWP-PRM-006",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "11 check(s): lockstep/determinism, lockstep/reset"
+      "detail": "12 check(s): lockstep/determinism, lockstep/reset"
     },
     {
       "id": "AWP-REP-001",
@@ -984,7 +984,7 @@
       "id": "AWP-SAF-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "16 check(s): lockstep/audit-log, lockstep/determinism, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
+      "detail": "17 check(s): lockstep/audit-log, lockstep/determinism, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions"
     },
     {
       "id": "AWP-SAF-002",
@@ -1146,13 +1146,13 @@
       "id": "AWP-SES-006",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "44 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "44 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-SES-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "45 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "45 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-SES-008",
@@ -1176,7 +1176,7 @@
       "id": "AWP-SES-011",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "41 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-SES-012",
@@ -1278,7 +1278,7 @@
       "id": "AWP-TRN-002",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-TRN-003",
@@ -1296,7 +1296,7 @@
       "id": "AWP-TRN-005",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "43 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-TRN-006",
@@ -1422,7 +1422,7 @@
       "id": "AWP-VER-004",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "50 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
+      "detail": "50 check(s): lockstep/admission-refusals, lockstep/advance-ordering, lockstep/audit-log, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-loss, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/envelope, lockstep/estop, lockstep/grants, lockstep/half-open-replaced, lockstep/heartbeat, lockstep/idempotency, lockstep/integer-range, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/manifest, lockstep/modalities, lockstep/observer-session, lockstep/one-session-per-connection, lockstep/open-refusals, lockstep/preempt-default, lockstep/queue, lockstep/rate-limit, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/resume-unknown, lockstep/session-open, lockstep/staging, lockstep/subscriptions, lockstep/tick-mismatch, lockstep/transfer, lockstep/transfer-offered, lockstep/unknown-methods, lockstep/version-negotiation, lockstep/window-expiry, lockstep/ws-stream"
     },
     {
       "id": "AWP-VER-005",
@@ -1457,7 +1457,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a5",
+    "version": "0.1.0a6",
     "vendor": "hyperduality"
   },
   "tests": [
