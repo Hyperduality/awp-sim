@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a7"
+    "version": "0.1.0a9"
   },
-  "specification": "0.1-draft.10",
+  "specification": "0.1-draft.11",
   "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-26T22:35:26Z",
+  "generated": "2026-10-18T21:05:49Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World + sim (lockstep): AWP-conformant against 0.1-draft.10 (awp-conformance 0.1.0a7)",
+    "wording": "Core World + sim (lockstep): AWP-conformant against 0.1-draft.11 (awp-conformance 0.1.0a9)",
     "classes": [
       "Core World",
       "sim"
@@ -28,7 +28,7 @@
     ],
     "counts": {
       "manual": 5,
-      "n/a": 83,
+      "n/a": 87,
       "pass": 142,
       "untestable": 11
     }
@@ -296,7 +296,7 @@
       "id": "AWP-CLK-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "34 check(s): lockstep/approval, lockstep/audit-log, lockstep/barrier-calls, lockstep/blend, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions, lockstep/task, lockstep/tick-authority, lockstep/transfer, lockstep/window-expiry"
+      "detail": "44 check(s): lockstep/advance-ordering, lockstep/approval, lockstep/audit-log, lockstep/barrier-calls, lockstep/blend, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/connection-without-session, lockstep/determinism, lockstep/embodiment-binding, lockstep/estop, lockstep/grants, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/multi-bind, lockstep/preempt-default, lockstep/queue, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions, lockstep/task, lockstep/tick-authority, lockstep/transfer, lockstep/window-expiry"
     },
     {
       "id": "AWP-CLK-008",
@@ -609,6 +609,30 @@
       "level": "MUST",
       "outcome": "pass",
       "detail": "2 check(s): lockstep/estop, lockstep/transfer"
+    },
+    {
+      "id": "AWP-GAM-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
+    },
+    {
+      "id": "AWP-GAM-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
+    },
+    {
+      "id": "AWP-GAM-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
+    },
+    {
+      "id": "AWP-GAM-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
     },
     {
       "id": "AWP-GUI-001",
@@ -1004,7 +1028,7 @@
       "id": "AWP-SAF-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "32 check(s): lockstep/approval, lockstep/audit-log, lockstep/barrier-calls, lockstep/blend, lockstep/determinism, lockstep/embodiment-binding, lockstep/estop, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/queue, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions, lockstep/task, lockstep/tick-authority, lockstep/transfer, lockstep/window-expiry"
+      "detail": "42 check(s): lockstep/advance-ordering, lockstep/approval, lockstep/audit-log, lockstep/barrier-calls, lockstep/blend, lockstep/cancel-executing, lockstep/cancel-pending, lockstep/close-during-motion, lockstep/determinism, lockstep/embodiment-binding, lockstep/estop, lockstep/grants, lockstep/heartbeat, lockstep/idempotency, lockstep/isolation, lockstep/lifecycle-complete, lockstep/lockstep-clock, lockstep/modalities, lockstep/multi-bind, lockstep/preempt-default, lockstep/queue, lockstep/reject-when-busy, lockstep/replace, lockstep/reset, lockstep/resume-replay, lockstep/seeding, lockstep/session-open, lockstep/snapshot-restore, lockstep/staging, lockstep/standing-approval, lockstep/subscriptions, lockstep/task, lockstep/tick-authority, lockstep/transfer, lockstep/window-expiry"
     },
     {
       "id": "AWP-SAF-002",
@@ -1483,7 +1507,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a7",
+    "version": "0.1.0a8",
     "vendor": "hyperduality"
   },
   "tests": [
@@ -1634,6 +1658,10 @@
     {
       "test": "lockstep/snapshot-restore",
       "outcome": "ran"
+    },
+    {
+      "test": "lockstep/input-chunk",
+      "outcome": "skipped: input_chunk not declared"
     },
     {
       "test": "lockstep/staging",

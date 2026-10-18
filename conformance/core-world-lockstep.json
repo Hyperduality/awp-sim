@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a7"
+    "version": "0.1.0a9"
   },
-  "specification": "0.1-draft.10",
+  "specification": "0.1-draft.11",
   "target": "ws://127.0.0.1:8731",
   "side": "world",
-  "generated": "2026-09-26T22:32:25Z",
+  "generated": "2026-10-18T21:02:46Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.10 (awp-conformance 0.1.0a7)",
+    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.11 (awp-conformance 0.1.0a9)",
     "classes": [
       "Core World"
     ],
@@ -26,7 +26,7 @@
     ],
     "counts": {
       "manual": 4,
-      "n/a": 103,
+      "n/a": 107,
       "pass": 124,
       "untestable": 10
     }
@@ -607,6 +607,30 @@
       "level": "MUST",
       "outcome": "pass",
       "detail": "1 check(s): lockstep/estop"
+    },
+    {
+      "id": "AWP-GAM-001",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
+    },
+    {
+      "id": "AWP-GAM-002",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
+    },
+    {
+      "id": "AWP-GAM-003",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
+    },
+    {
+      "id": "AWP-GAM-004",
+      "level": "MUST",
+      "outcome": "n/a",
+      "detail": "input_chunk declared: no"
     },
     {
       "id": "AWP-GUI-001",
@@ -1481,7 +1505,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a7",
+    "version": "0.1.0a8",
     "vendor": "hyperduality"
   },
   "tests": [
@@ -1632,6 +1656,10 @@
     {
       "test": "lockstep/snapshot-restore",
       "outcome": "skipped: capability snapshot not advertised"
+    },
+    {
+      "test": "lockstep/input-chunk",
+      "outcome": "skipped: input_chunk not declared"
     },
     {
       "test": "lockstep/staging",
