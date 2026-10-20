@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a9"
+    "version": "0.1.0a10"
   },
-  "specification": "0.1-draft.11",
-  "target": "ws://127.0.0.1:8731",
+  "specification": "0.1-draft.12",
+  "target": "ws://127.0.0.1:8710",
   "side": "world",
-  "generated": "2026-10-18T21:02:46Z",
+  "generated": "2026-10-20T15:05:36Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.11 (awp-conformance 0.1.0a9)",
+    "wording": "Core World (lockstep): AWP-conformant against 0.1-draft.12 (awp-conformance 0.1.0a10)",
     "classes": [
       "Core World"
     ],
@@ -1505,7 +1505,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a8",
+    "version": "0.1.0a9",
     "vendor": "hyperduality"
   },
   "tests": [

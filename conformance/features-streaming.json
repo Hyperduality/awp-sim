@@ -1,15 +1,15 @@
 {
   "suite": {
     "name": "awp-conformance",
-    "version": "0.1.0a9"
+    "version": "0.1.0a10"
   },
-  "specification": "0.1-draft.11",
-  "target": "ws://127.0.0.1:8731",
+  "specification": "0.1-draft.12",
+  "target": "ws://127.0.0.1:8710",
   "side": "world",
-  "generated": "2026-10-18T21:07:55Z",
+  "generated": "2026-10-20T15:21:25Z",
   "claim": {
     "status": "conformant",
-    "wording": "Core World (streaming): AWP-conformant against 0.1-draft.11 (awp-conformance 0.1.0a9)",
+    "wording": "Core World (streaming): AWP-conformant against 0.1-draft.12 (awp-conformance 0.1.0a10)",
     "classes": [
       "Core World"
     ],
@@ -296,7 +296,7 @@
       "id": "AWP-CLK-007",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "50 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-without-session, streaming/deadlines, streaming/embodiment-binding, streaming/envelope, streaming/estop, streaming/grants, streaming/half-open-replaced, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/multi-bind, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/window-expiry, streaming/ws-stream"
+      "detail": "50 check(s): streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/connection-without-session, streaming/deadlines, streaming/embodiment-binding, streaming/estop, streaming/grants, streaming/half-open-replaced, streaming/heartbeat, streaming/idempotency, streaming/integer-range, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/multi-bind, streaming/one-session-per-connection, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/window-expiry, streaming/ws-stream"
     },
     {
       "id": "AWP-CLK-008",
@@ -1028,7 +1028,7 @@
       "id": "AWP-SAF-001",
       "level": "MUST",
       "outcome": "pass",
-      "detail": "48 check(s): streaming/admission-refusals, streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/deadlines, streaming/embodiment-binding, streaming/envelope, streaming/estop, streaming/grants, streaming/half-open-replaced, streaming/heartbeat, streaming/idempotency, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/multi-bind, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/window-expiry, streaming/ws-stream"
+      "detail": "48 check(s): streaming/approval, streaming/audit-log, streaming/blend, streaming/cancel-executing, streaming/cancel-pending, streaming/close-during-motion, streaming/close-outranks-cancel, streaming/command-channel, streaming/connection-loss, streaming/deadlines, streaming/embodiment-binding, streaming/estop, streaming/grants, streaming/half-open-replaced, streaming/heartbeat, streaming/idempotency, streaming/integer-range, streaming/isolation, streaming/lifecycle-complete, streaming/max-duration, streaming/max-obs-rate, streaming/modalities, streaming/multi-bind, streaming/one-session-per-connection, streaming/preempt-default, streaming/queue, streaming/rate-limit, streaming/reject-when-busy, streaming/replace, streaming/reset, streaming/resume-replay, streaming/session-open, streaming/stale-intent, streaming/standing-approval, streaming/stream-delivery, streaming/subscriptions, streaming/task, streaming/telemetry, streaming/transfer, streaming/window-expiry, streaming/ws-stream"
     },
     {
       "id": "AWP-SAF-002",
@@ -1507,7 +1507,7 @@
   ],
   "world": {
     "name": "awp-sim",
-    "version": "0.1.0a8",
+    "version": "0.1.0a9",
     "vendor": "hyperduality"
   },
   "tests": [
