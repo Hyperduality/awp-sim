@@ -11,13 +11,13 @@ It is built from these parts:
 
 It speaks AWP through the protocol layer of [awp-python](https://github.com/Hyperduality/awp-python): its message codec, frame codec, schemas, and lifecycle table.
 
-It targets specification revision **`0.1-draft.11`**, pinned as the `spec/` submodule. This is an alpha, so it will change along with the draft.
+It targets specification revision **`0.1-draft.12`**, pinned as the `spec/` submodule. This is an alpha, so it will change along with the draft.
 
 ## Status
 
-![AWP: Core World, AWP-conformant against 0.1-draft.11](https://img.shields.io/badge/AWP-Core_World%2C_conformant_0.1--draft.11-555)
+![AWP: Core World, AWP-conformant against 0.1-draft.12](https://img.shields.io/badge/AWP-Core_World%2C_conformant_0.1--draft.12-555)
 
-The world is **Core World: AWP-conformant against 0.1-draft.11** in both time models, and so is every feature it offers. [awp-conformance](https://github.com/Hyperduality/awp-conformance) reports no failure and nothing untested. [`conformance/`](conformance/README.md) holds the reports and the evidence for their manual rows, and CI runs the suite on every change. Every recorded trace also passes the spec's own checker, which verifies:
+The world is **Core World: AWP-conformant against 0.1-draft.12** in both time models, and so is every feature it offers. [awp-conformance](https://github.com/Hyperduality/awp-conformance) reports no failure and nothing untested. [`conformance/`](conformance/README.md) holds the reports and the evidence for their manual rows, and CI runs the suite on every change. Every recorded trace also passes the spec's own checker, which verifies:
 
 - schemas;
 - the action lifecycle table;
@@ -78,7 +78,7 @@ awp-sim scenarios --out traces
 src/awp_sim/        world engine, arm and gripper, server, audit log, loopback, scenarios, replay, CLI
 tests/              engine, server, feature, scenario, and evidence tests
 conformance/        conformance reports and evidence
-spec/               agent-world-protocol, pinned at spec-v0.1-draft.11
+spec/               agent-world-protocol, pinned at spec-v0.1-draft.12
 scripts/            trace checking against the spec's checker
 ```
 

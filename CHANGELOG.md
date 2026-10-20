@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0a9
+
+Targets specification revision `0.1-draft.12`.
+
+- Requires awp-python 0.1.0a8.
+- The reports come from awp-conformance 0.1.0a10.
+
 ## 0.1.0a8
 
 Targets specification revision `0.1-draft.11`.
