@@ -21,7 +21,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "awp-python>=0.1.0a7",
+  "awp-python>=0.1.0a8",
   "jsonschema>=4.23",
   "websockets>=13.0",
 ]
